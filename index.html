@@ -5,22 +5,41 @@
   <title>RUST9</title>
   <link rel="stylesheet" href="style.css">
   <script>
-    const phrases = [
-      "i remember.",
-      "i don't remember.",
-      "she remembers for me.",
-      "the mirror remembers.",
-      "she's still behind the wall."
-    ];
-    window.onload = () => {
-      document.getElementById("unstable").innerText =
-        phrases[Math.floor(Math.random() * phrases.length)];
-    };
+  const phrases = [
+  "je me souviens.",
+  "je ne me souviens pas.",
+  "elle se souvient pour moi.",
+  "le miroir se souvient.",
+  "elle est toujours derrière le mur."
+];
+
+const colors = ["white", "#ff3300", "#ff6600", "gray", "black"];
+
+function glitchText(text) {
+  return text.split("").map(char => {
+    if (Math.random() < 0.4) { // 40% des lettres glitchent
+      const x = Math.floor(Math.random()*10-5); // -5px à +5px
+      const y = Math.floor(Math.random()*10-5);
+      const rotate = Math.floor(Math.random()*30-15); // -15° à +15°
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      const opacity = Math.random() * 0.6 + 0.4; // 0.4 à 1
+      return `<span style="color:${color}; transform:translate(${x}px,${y}px) rotate(${rotate}deg); opacity:${opacity}; display:inline-block;">${char}</span>`;
+    } else {
+      return char;
+    }
+  }).join("");
+}
+
+window.onload = () => {
+  const unstable = document.getElementById("unstable");
+  const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+  unstable.innerHTML = glitchText(phrase);
+}
   </script>
 </head>
 <body>
   <div class="center">
-    <h1>RUST9</h1>
+    <h1>MiroirFêlé</h1>
     <p id="unstable"></p>
     <nav>
       <a href="voices.html">voices</a> | 
