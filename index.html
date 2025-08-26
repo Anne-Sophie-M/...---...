@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RUST9</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    const phrases = [
+      "i remember.",
+      "i don't remember.",
+      "she remembers for me.",
+      "the mirror remembers.",
+      "she's still behind the wall."
+    ];
+    window.onload = () => {
+      document.getElementById("unstable").innerText =
+        phrases[Math.floor(Math.random() * phrases.length)];
+    };
+  </script>
+</head>
+<body>
+  <div class="center">
+    <h1>RUST9</h1>
+    <p id="unstable"></p>
+    <nav>
+      <a href="voices.html">voices</a> | 
+      <a href="mirror.html">mirror</a> | 
+      <a href="journal.html">journal</a>
+    </nav>
+  </div>
+</body>
+</html>
