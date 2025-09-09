@@ -14,13 +14,13 @@ body {
   color: white;
 }
 
-/* Overlay sombre optionnel si tu veux assombrir un peu tout le fond */
+/* Overlay léger optionnel */
 body::before {
   content: "";
   position: fixed;
   top:0; left:0;
   width:100%; height:100%;
-  background: rgba(0,0,0,0.2); /* léger assombrissement, modifiable */
+  background: rgba(0,0,0,0.15); /* léger assombrissement du fond */
   z-index: -1;
 }
 
@@ -52,9 +52,9 @@ nav.years a {
   text-decoration:none;
   color:#f2f2f2;
   padding:6px 14px;
-  border:1px solid rgba(255,255,255,0.9);
+  border:1px solid rgba(255,255,255,0.2);
   border-radius:20px;
-  background: rgba(0,0,0,0.9); /* nav opaque */
+  background: rgba(10,10,30,0.95); /* bleu très foncé */
   font-size:14px;
 }
 
@@ -62,20 +62,20 @@ nav.years a {
 section.year {
   width:min(1100px,92%);
   margin:30px auto;
-  border:1px solid rgba(255,255,255,0.9);
+  border:1px solid rgba(255,255,255,0.2);
   border-radius:16px;
-  background: rgba(0,0,0,0.9); /* quasi opaque */
-  box-shadow:0 6px 20px rgba(0,0,0,0.9);
+  background: rgba(10,10,30,0.9); /* bleu très foncé */
+  box-shadow:0 6px 20px rgba(0,0,0,0.8);
   overflow:hidden;
 }
 
 /* En-tête des années */
 .year-head {
-  background: rgba(0,0,0,0.85);
+  background: rgba(10,10,30,0.95);
   padding:12px 18px;
   font-weight:bold;
   font-size:20px;
-  border-bottom:1px solid rgba(255,255,255,0.9);
+  border-bottom:1px solid rgba(255,255,255,0.2);
   font-family: 'Caveat', cursive;
   color:#e8c2c2;
 }
@@ -83,8 +83,8 @@ section.year {
 /* Bloc des mois */
 .month {
   flex:1 1 220px;
-  background: rgba(0,0,0,0.85); /* blocs opaques */
-  border:1px solid rgba(255,255,255,0.9);
+  background: rgba(10,10,30,0.95);
+  border:1px solid rgba(255,255,255,0.2);
   border-radius:12px;
   padding:10px 12px;
 }
@@ -104,17 +104,19 @@ section.year {
 }
 
 .entry {
-  background: rgba(0,0,0,0.9); /* bloc bien opaque */
+  background: rgba(10,10,30,0.95); /* bleu très foncé */
   padding:8px 10px;
   border-radius:8px;
-  border:1px solid rgba(255,255,255,0.9);
+  border:1px solid rgba(255,255,255,0.2);
   text-decoration:none;
   color:#f2f2f2;
   font-size:14px;
   transition: background 0.2s;
 }
 
-.entry:hover { background: rgba(255,200,200,0.12); }
+.entry:hover { 
+  background: rgba(20,20,60,0.95); /* un peu plus clair au survol */
+}
 
 .entry .date { font-weight:bold; font-size:13px; color:#ffb3b3; }
 .entry .label { font-style:italic; color:#ccc; font-size:12px; }
