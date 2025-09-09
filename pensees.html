@@ -131,6 +131,37 @@ footer {
 .year2019, .year-head.year2019 { background: rgba(200, 30, 30, 0.80); }
 .year2020, .year-head.year2020 { background: rgba(220, 20, 20, 0.82); }
 .year2021, .year-head.year2021 { background: rgba(240, 10, 10, 0.85); }
+
+/* Calque sombre et glitch par-dessus le background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: rgba(0,0,0,0);
+  mix-blend-mode: multiply;
+  z-index: 0;
+  transition: background 0.2s linear;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: url("images/glitch.png");
+  background-size: cover;
+  opacity: 0;
+  mix-blend-mode: screen;
+  z-index: 0;
+  transition: opacity 0.2s linear, transform 0.1s;
+}
 </style>
 </head>
 <body>
@@ -149,7 +180,35 @@ footer {
 <footer>
   ©RUST9
 </footer>
-</body>
+<script>
+window.addEventListener("scroll", () => {
+  const scrollY = window.scrollY;
+  const docHeight = document.body.scrollHeight - window.innerHeight;
+  const progress = scrollY / docHeight; // valeur entre 0 et 1
+
+  // assombrissement progressif
+  const darkOpacity = Math.min(progress * 0.7, 0.7);
+  document.body.style.setProperty("--dark-opacity", darkOpacity);
+
+  // glitch visible en bas
+  const glitchOpacity = Math.min(progress * 1.2, 1);
+  document.body.style.setProperty("--glitch-opacity", glitchOpacity);
+
+  // appliquer via CSSOM
+  const sheet = document.styleSheets[0];
+  sheet.insertRule(`body::before { background: rgba(0,0,0,${darkOpacity}); }`, sheet.cssRules.length);
+  sheet.insertRule(`body::after { opacity: ${glitchOpacity}; }`, sheet.cssRules.length);
+
+  // effet de secousses glitch (uniquement en bas de page)
+  if (progress > 0.7) {
+    const intensity = (progress - 0.7) * 20; // augmente avec le scroll
+    const offsetX = (Math.random() - 0.5) * intensity;
+    const offsetY = (Math.random() - 0.5) * intensity;
+    const hue = Math.floor(Math.random() * 40 - 20); // variation de teinte
+    sheet.insertRule(`body::after { transform: translate(${offsetX}px, ${offsetY}px) hue-rotate(${hue}deg); }`, sheet.cssRules.length);
+  }
+});
+</script></body>
 </html>
 <section class="year year2017" id="y2017">
 <div class="year-head year2017">2017</div>
