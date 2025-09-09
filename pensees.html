@@ -12,18 +12,6 @@ body {
   background-size: cover;
   color: white;
 }
-
-/* Overlay sombre pour améliorer la lisibilité */
-body::before {
-  content: "";
-  position: fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background: rgba(0,0,0,0.5); /* assombrit le fond */
-  z-index: -1; /* derrière tout le contenu */
-}
   header {
     text-align:center; padding:40px 20px 20px;
   }
@@ -39,23 +27,23 @@ body::before {
   nav.years a {
     text-decoration:none; color:#f2f2f2; padding:6px 14px;
     border:1px solid rgba(255,255,255,0.2); border-radius:20px;
-    background:rgba(255,255,255,0.05); font-size:14px;
+    background:rgba(255,255,255,0.9); font-size:14px;
   }
   section.year {
     width:min(1100px,92%); margin:30px auto; border:1px solid rgba(255,255,255,0.1);
     border-radius:16px; background:rgba(0,0,0,0.25);
-    box-shadow:0 6px 20px rgba(0,0,0,0.5); overflow:hidden;
+    box-shadow:0 6px 20px rgba(0,0,0,0.9); overflow:hidden;
   }
   .year-head {
     background:rgba(255,255,255,0.04); padding:12px 18px;
-    font-weight:bold; font-size:20px; border-bottom:1px solid rgba(255,255,255,0.1);
+    font-weight:bold; font-size:20px; border-bottom:1px solid rgba(255,255,255,0.9);
     font-family: 'Caveat', cursive; color:#e8c2c2;
   }
   .months {
     display:flex; flex-wrap:wrap; gap:12px; padding:18px;
   }
   .month {
-    flex:1 1 220px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+    flex:1 1 220px; background:rgba(255,255,255,0.9); border:1px solid rgba(255,255,255,0.9);
     border-radius:12px; padding:10px 12px;
   }
   .month h2 {
