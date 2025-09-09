@@ -161,43 +161,9 @@ body {
   background-size: cover;
   transition: filter 0.15s linear, background-position 80ms linear;
 }
-
-/* Overlay layers */
-.overlay-dark {
-  position: fixed;
-  top:0;left:0;width:100%;height:100%;
-  pointer-events:none;
-  background: rgba(0,0,0,0);
-  mix-blend-mode: multiply;
-  z-index:0;
-  transition: background 150ms linear;
-}
-
-.vhs-glitch {
-  position: fixed;
-  top:0;left:0;width:100%;height:100%;
-  pointer-events:none;
-  z-index:2;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.12) 0px,
-    rgba(255,255,255,0.12) 2px,
-    transparent 2px,
-    transparent 4px
-  );
-  opacity:0;
-  mix-blend-mode: difference;
-  transition: opacity 60ms linear;
-}
-
-body {
-  background: url("images/background.jpg") no-repeat center center fixed;
-  background-size: cover;
-  transition: background-position 80ms linear;
-}
 </style>
 </head>
-<body><div aria-hidden="true" class="overlay-dark"></div><div aria-hidden="true" class="vhs-glitch"></div>
+<body><div aria-hidden="true" class="overlay-dark"></div>
 <header>
 <h1>Pensées</h1>
 <div class="sub">Fragments intimes, 2017–2021</div>
@@ -216,62 +182,37 @@ body {
 <script>
 (function(){
   const dark = document.querySelector('.overlay-dark');
-  const vhs = document.querySelector('.vhs-glitch');
-  let glitchActive = false;
 
-  function applyGlitch(progress) {
-    // dark overlay
-    const darkOpacity = Math.min(progress * 0.85, 0.85);
-    if (dark) dark.style.background = 'rgba(0,0,0,'+darkOpacity+')';
-
-    // reset filters (preserve natural colors)
-    document.body.style.filter = 'contrast('+(1+progress*0.4)+')';
-
-    // jitter intensities
-    let offsetX = 0, offsetY = 0;
-    if (progress >= 0.5 && progress < 0.8) {
-      const intensity = 8 + (progress-0.5)*30;
-      offsetX = (Math.random()-0.5)*intensity;
-      offsetY = (Math.random()-0.5)*intensity;
-    } else if (progress >= 0.8) {
-      const intensity = 25 + (progress-0.8)*80;
-      offsetX = (Math.random()-0.5)*intensity;
-      offsetY = (Math.random()-0.5)*intensity;
-    }
-    document.body.style.backgroundPosition = offsetX+"px "+offsetY+"px";
-
-    // VHS glitch bands (only in violent zone)
-    if (progress >= 0.8) {
-      if (Math.random() < 0.3) {
-        vhs.style.opacity = 1;
-      } else {
-        vhs.style.opacity = 0;
-      }
-    } else {
-      vhs.style.opacity = 0;
-    }
-  }
-
-  function animate() {
+  function update() {
     const scrollY = window.scrollY || window.pageYOffset;
     const docHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight;
-    const progress = docHeight>0 ? scrollY/docHeight : 0;
+    const progress = docHeight > 0 ? (scrollY / docHeight) : 0;
 
-    applyGlitch(progress);
+    // dark overlay opacity
+    const darkOpacity = Math.min(progress * 0.85, 0.85);
+    if (dark) dark.style.background = 'rgba(0,0,0,' + darkOpacity + ')';
 
-    if (progress >= 0.5) {
-      glitchActive = true;
-    } else {
-      glitchActive = false;
+    // apply filters to background.jpg
+    const hue = Math.round(progress * 60 - 30); // hue shift -30..+30
+    const contrast = 1 + progress * 0.6;
+    const saturate = 1 + progress * 0.8;
+    document.body.style.filter = 'hue-rotate(' + hue + 'deg) contrast(' + contrast + ') saturate(' + saturate + ')';
+
+    // background jitter ("glitch shake"), especially near bottom
+    let offsetX = 0, offsetY = 0;
+    if (progress > 0.7) {
+      const intensity = (progress - 0.7) * 60; // up to ~18px shift
+      offsetX = (Math.random() - 0.5) * intensity;
+      offsetY = (Math.random() - 0.5) * intensity;
     }
-
-    if (glitchActive) {
-      requestAnimationFrame(animate);
-    }
+    document.body.style.backgroundPosition = offsetX + 'px ' + offsetY + 'px';
   }
 
-  window.addEventListener('scroll', ()=>{ requestAnimationFrame(animate); }, {passive:true});
-  animate();
+  window.addEventListener('scroll', () => {
+    window.requestAnimationFrame(update);
+  }, {passive:true});
+
+  update();
 })();
 </script></body>
 </html>
