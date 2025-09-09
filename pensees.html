@@ -17,18 +17,21 @@ body {
 header {
   text-align:center;
   padding:40px 20px 20px;
+  background: rgba(180,60,60,0.5); /* encadré semi-transparent derrière titre */
+  border-radius: 12px;
+  display: inline-block;
 }
 
 h1 {
   font-family: 'Caveat', cursive;
   font-size:clamp(32px,5vw,60px);
   margin:0;
-  color: rgba(200,80,80,0.9); /* titre rouge vif */
+  color: rgba(200,80,80,0.9);
   letter-spacing:1px;
 }
 
 .sub {
-  color: rgba(200,80,80,0.85); /* sous-titre rouge vif */
+  color: rgba(200,80,80,0.85);
   font-size:15px;
   margin-top:8px;
 }
@@ -148,6 +151,55 @@ footer {
     <a href="#y2021">2021</a>
   </nav>
 </header>
+
+<!-- Sections des années avec classes appliquées -->
+<section class="year year2017" id="y2017">
+  <div class="year-head year2017">2017</div>
+  <div class="months">
+    <div class="month">
+      <h2>Janvier</h2>
+      <div class="entries">
+        <div class="entry"><span class="date">01/01</span> Nouvelle année</div>
+      </div>
+    </div>
+    <div class="month">
+      <h2>Février</h2>
+      <div class="entries">
+        <div class="entry"><span class="date">14/02</span> Saint-Valentin</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="year year2018" id="y2018">
+  <div class="year-head year2018">2018</div>
+  <div class="months">
+    <div class="month">
+      <h2>Janvier</h2>
+      <div class="entries">
+        <div class="entry"><span class="date">01/01</span> Nouvelle année</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="year year2019" id="y2019">
+  <div class="year-head year2019">2019</div>
+</section>
+
+<section class="year year2020" id="y2020">
+  <div class="year-head year2020">2020</div>
+</section>
+
+<section class="year year2021" id="y2021">
+  <div class="year-head year2021">2021</div>
+</section>
+
+<footer>
+  &copy; 2025 RUST9
+</footer>
+</body>
+</html>
 <section class="year" id="y2017">
   <div class="year-head">2017</div>
   <div class="months">
