@@ -5,6 +5,7 @@
 <title>Pensées — Archives 2017–2021</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+/* Fond général */
 body {
   margin: 0;
   font-family: monospace;
@@ -12,55 +13,118 @@ body {
   background-size: cover;
   color: white;
 }
-  header {
-    text-align:center; padding:40px 20px 20px;
-  }
-  h1 {
-    font-family: 'Caveat', cursive; font-size:clamp(32px,5vw,60px);
-    margin:0; color:#f8d7da; letter-spacing:1px;
-  }
-  .sub { color:#bbb; font-size:15px; margin-top:8px; }
-  nav.years {
-    display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
-    margin:20px 0 30px;
-  }
-  nav.years a {
-    text-decoration:none; color:#f2f2f2; padding:6px 14px;
-    border:1px solid rgba(255,255,255,0.9); border-radius:20px;
-    background:rgba(255,255,255,0.9); font-size:14px;
-  }
-  section.year {
-    width:min(1100px,92%); margin:30px auto; border:1px solid rgba(255,255,255,0.9);
-    border-radius:16px; background:rgba(0,0,0,0.25);
-    box-shadow:0 6px 20px rgba(0,0,0,0.9); overflow:hidden;
-  }
-  .year-head {
-    background:rgba(255,255,255,0.04); padding:12px 18px;
-    font-weight:bold; font-size:20px; border-bottom:1px solid rgba(255,255,255,0.9);
-    font-family: 'Caveat', cursive; color:#e8c2c2;
-  }
-  .months {
-    display:flex; flex-wrap:wrap; gap:12px; padding:18px;
-  }
-  .month {
-    flex:1 1 220px; background:rgba(255,255,255,0.9); border:1px solid rgba(255,255,255,0.9);
-    border-radius:12px; padding:10px 12px;
-  }
-  .month h2 {
-    font-size:17px; margin:0 0 10px; font-family: 'Caveat', cursive; color:#cfcfff;
-  }
-  .entries {
-    display:flex; flex-direction:column; gap:6px;
-  }
-  .entry {
-    background:rgba(255,255,255,0.05); padding:8px 10px; border-radius:8px;
-    border:1px solid rgba(255,255,255,0.08); text-decoration:none; color:#f2f2f2;
-    font-size:14px; transition:background 0.2s;
-  }
-  .entry:hover { background:rgba(255,200,200,0.12); }
-  .entry .date { font-weight:bold; font-size:13px; color:#ffb3b3; }
-  .entry .label { font-style:italic; color:#ccc; font-size:12px; }
-  footer { text-align:center; color:#777; padding:40px 20px; font-size:13px; }
+
+/* Overlay sombre optionnel si tu veux assombrir un peu tout le fond */
+body::before {
+  content: "";
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.2); /* léger assombrissement, modifiable */
+  z-index: -1;
+}
+
+header {
+  text-align:center;
+  padding:40px 20px 20px;
+}
+
+h1 {
+  font-family: 'Caveat', cursive;
+  font-size:clamp(32px,5vw,60px);
+  margin:0;
+  color:#f8d7da;
+  letter-spacing:1px;
+}
+
+.sub { color:#bbb; font-size:15px; margin-top:8px; }
+
+/* Navigation des années */
+nav.years {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  margin:20px 0 30px;
+}
+
+nav.years a {
+  text-decoration:none;
+  color:#f2f2f2;
+  padding:6px 14px;
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:20px;
+  background: rgba(0,0,0,0.9); /* nav opaque */
+  font-size:14px;
+}
+
+/* Bloc des années */
+section.year {
+  width:min(1100px,92%);
+  margin:30px auto;
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:16px;
+  background: rgba(0,0,0,0.9); /* quasi opaque */
+  box-shadow:0 6px 20px rgba(0,0,0,0.9);
+  overflow:hidden;
+}
+
+/* En-tête des années */
+.year-head {
+  background: rgba(0,0,0,0.85);
+  padding:12px 18px;
+  font-weight:bold;
+  font-size:20px;
+  border-bottom:1px solid rgba(255,255,255,0.9);
+  font-family: 'Caveat', cursive;
+  color:#e8c2c2;
+}
+
+/* Bloc des mois */
+.month {
+  flex:1 1 220px;
+  background: rgba(0,0,0,0.85); /* blocs opaques */
+  border:1px solid rgba(255,255,255,0.9);
+  border-radius:12px;
+  padding:10px 12px;
+}
+
+.month h2 {
+  font-size:17px;
+  margin:0 0 10px;
+  font-family: 'Caveat', cursive;
+  color:#cfcfff;
+}
+
+/* Entrées */
+.entries {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.entry {
+  background: rgba(0,0,0,0.9); /* bloc bien opaque */
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.9);
+  text-decoration:none;
+  color:#f2f2f2;
+  font-size:14px;
+  transition: background 0.2s;
+}
+
+.entry:hover { background: rgba(255,200,200,0.12); }
+
+.entry .date { font-weight:bold; font-size:13px; color:#ffb3b3; }
+.entry .label { font-style:italic; color:#ccc; font-size:12px; }
+
+footer {
+  text-align:center;
+  color:#777;
+  padding:40px 20px;
+  font-size:13px;
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Lora&display=swap" rel="stylesheet">
 </head>
