@@ -161,9 +161,50 @@ body {
   background-size: cover;
   transition: filter 0.15s linear, background-position 80ms linear;
 }
+
+/* === Effets overlay & VHS glitch === */
+.overlay-dark{
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:1;
+  background: rgba(0,0,0,0);
+  transition: background 120ms linear;
+  mix-blend-mode:multiply;
+}
+.vhs-glitch{
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:1200;
+  mix-blend-mode:overlay;
+  opacity:0;
+  transition: opacity 80ms linear;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.10) 0px,
+      rgba(255,255,255,0.10) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+  filter: blur(0.6px) contrast(1.2);
+}
+.vhs-band {
+  position:absolute;
+  left:0; right:0;
+  height: 20px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.15));
+  transform: translateX(-5%);
+  mix-blend-mode:screen;
+  opacity:0;
+  will-change: transform, opacity;
+  pointer-events:none;
+}
+
 </style>
 </head>
-<body><div aria-hidden="true" class="overlay-dark"></div>
+<body>
+<div class="overlay-dark"></div>
+<div class="vhs-glitch"></div><div aria-hidden="true" class="overlay-dark"></div>
 <header>
 <h1>Pensées</h1>
 <div class="sub">Fragments intimes, 2017–2021</div>
@@ -214,7 +255,75 @@ body {
 
   update();
 })();
-</script></body>
+</script>
+<script>
+(function(){
+  const overlay = document.querySelector('.overlay-dark');
+  const vhs = document.querySelector('.vhs-glitch');
+  const body = document.body;
+  let animLoop=null, glitchMode='calm', vhsInterval=null, activeBands=[];
+
+  function getProgress(){
+    const y=window.scrollY||pageYOffset;
+    const h=Math.max(document.documentElement.scrollHeight,document.body.scrollHeight)-window.innerHeight;
+    return h>0?Math.min(1,Math.max(0,y/h)):0;
+  }
+  function applyOverlay(p){
+    const o=Math.min(p*0.85,0.85);
+    overlay.style.background=`rgba(0,0,0,${o})`;
+  }
+  function startLoop(){
+    if(animLoop) return;
+    function loop(){
+      const p=getProgress();
+      applyOverlay(p);
+      if(glitchMode==='soft'){
+        const ox=(Math.random()-0.5)*10;
+        const oy=(Math.random()-0.5)*5;
+        body.style.backgroundPosition=`${ox}px ${oy}px`;
+      } else if(glitchMode==='violent'){
+        const ox=(Math.random()-0.5)*60;
+        const oy=(Math.random()-0.5)*60;
+        body.style.backgroundPosition=`${ox}px ${oy}px`;
+      }
+      animLoop=requestAnimationFrame(loop);
+    }
+    animLoop=requestAnimationFrame(loop);
+  }
+  function stopLoop(){
+    if(animLoop){cancelAnimationFrame(animLoop);animLoop=null;}
+    body.style.backgroundPosition='';
+  }
+  function spawnBand(){
+    const b=document.createElement('div');
+    b.className='vhs-band';
+    b.style.top=Math.floor(Math.random()*100)+'%';
+    b.style.height=(6+Math.random()*36)+'px';
+    vhs.appendChild(b);
+    requestAnimationFrame(()=>{b.style.opacity='1';b.style.transform='translateX(15%)';});
+    setTimeout(()=>{b.style.opacity='0';b.style.transform='translateX(-10%)';setTimeout(()=>{try{vhs.removeChild(b);}catch(e){}},200);},200+Math.random()*500);
+  }
+  function startBands(){
+    if(vhsInterval) return;
+    vhs.style.opacity='1';
+    vhsInterval=setInterval(()=>{spawnBand();},300);
+  }
+  function stopBands(){
+    if(vhsInterval){clearInterval(vhsInterval);vhsInterval=null;}
+    vhs.style.opacity='0';
+  }
+  function handle(){
+    const p=getProgress();
+    if(p<0.35){if(glitchMode!=='calm'){glitchMode='calm';stopLoop();stopBands();}}
+    else if(p<0.75){if(glitchMode!=='soft'){glitchMode='soft';startLoop();stopBands();}}
+    else{if(glitchMode!=='violent'){glitchMode='violent';startLoop();startBands();}}
+  }
+  window.addEventListener('scroll',()=>{requestAnimationFrame(handle);},{passive:true});
+  handle();
+})();
+</script>
+
+</body>
 </html>
 <section class="year year2017" id="y2017">
 <div class="year-head year2017">2017</div>
