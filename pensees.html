@@ -135,18 +135,10 @@ footer {
 /* Calque sombre et glitch par-dessus le background */
 
 /* Overlays for progressive darkening + glitch (stronger, JS-driven) */
-.overlay-dark, .overlay-glitch {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  display: block;
-}
+.overlay-dark, 
 
 /* Make sure overlays sit above the background but under the page content */
-body > .overlay-dark, body > .overlay-glitch { z-index: 0; }
+body > .overlay-dark, body > 
 body > *:not(.overlay-dark):not(.overlay-glitch) { position: relative; z-index: 1; }
 
 .overlay-dark {
@@ -156,25 +148,22 @@ body > *:not(.overlay-dark):not(.overlay-glitch) { position: relative; z-index: 
   will-change: background;
 }
 
-.overlay-glitch {
-  background-image: url('images/glitch.png'); /* image bruit/glitch — must exist */
-  background-repeat: repeat;
-  background-size: cover;
-  opacity: 0; /* will be ramped by JS */
-  mix-blend-mode: screen;
-  transition: opacity 150ms linear, transform 120ms linear, filter 120ms linear, clip-path 120ms linear;
-  will-change: opacity, transform, filter, clip-path;
-  /* slight smoothing */
-  image-rendering: optimizeSpeed;
-}
+
 
 /* Optional: micro-shifts for some elements to enhance the "shake" perception */
 .entry, header, nav, .year-head {
   transition: transform 120ms linear;
 }
+
+/* Glitch effects directly on background.jpg */
+body {
+  background: url("images/background.jpg") no-repeat center center fixed;
+  background-size: cover;
+  transition: filter 0.15s linear, background-position 80ms linear;
+}
 </style>
 </head>
-<body><div aria-hidden="true" class="overlay-dark"></div><div aria-hidden="true" class="overlay-glitch"></div>
+<body><div aria-hidden="true" class="overlay-dark"></div>
 <header>
 <h1>Pensées</h1>
 <div class="sub">Fragments intimes, 2017–2021</div>
@@ -193,69 +182,36 @@ body > *:not(.overlay-dark):not(.overlay-glitch) { position: relative; z-index: 
 <script>
 (function(){
   const dark = document.querySelector('.overlay-dark');
-  const glitch = document.querySelector('.overlay-glitch');
-  if (!dark || !glitch) return;
-
-  let ticking = false;
 
   function update() {
     const scrollY = window.scrollY || window.pageYOffset;
     const docHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight;
     const progress = docHeight > 0 ? (scrollY / docHeight) : 0;
 
-    // darkness ramps from 0 to 0.85
+    // dark overlay opacity
     const darkOpacity = Math.min(progress * 0.85, 0.85);
-    dark.style.background = 'rgba(0,0,0,' + darkOpacity + ')';
+    if (dark) dark.style.background = 'rgba(0,0,0,' + darkOpacity + ')';
 
-    // glitch appears progressively after ~10% scroll
-    const glitchStart = 0.10;
-    const glitchProgress = progress <= glitchStart ? 0 : (progress - glitchStart) / (1 - glitchStart);
-    const glitchOpacity = Math.min(glitchProgress * 1.15, 1);
-    glitch.style.opacity = glitchOpacity;
+    // apply filters to background.jpg
+    const hue = Math.round(progress * 60 - 30); // hue shift -30..+30
+    const contrast = 1 + progress * 0.6;
+    const saturate = 1 + progress * 0.8;
+    document.body.style.filter = 'hue-rotate(' + hue + 'deg) contrast(' + contrast + ') saturate(' + saturate + ')';
 
-    // subtle hue & saturation variation with scroll
-    const hue = Math.round((progress) * 40 - 20); // -20deg .. +20deg
-    const sat = 1 + progress * 0.9;
-    glitch.style.filter = 'hue-rotate(' + hue + 'deg) saturate(' + sat + ')';
-
-    // when near bottom, apply strong shake/glitch; intensity ramps from 0 at 85% to 1 at 100%
-    const shakeStart = 0.85;
-    if (progress > shakeStart) {
-      const t = Math.min((progress - shakeStart) / (1 - shakeStart), 1); // 0..1
-      // intensity scaling
-      const maxOffset = 30 * t; // px
-      const x = (Math.random() * 2 - 1) * maxOffset;
-      const y = (Math.random() * 2 - 1) * maxOffset;
-      const rot = (Math.random() * 2 - 1) * 6 * t; // degrees
-      glitch.style.transform = 'translate(' + x + 'px, ' + y + 'px) rotate(' + rot + 'deg)';
-      // random clip slices for cinematic glitch
-      const top = Math.random() * 15 * (1 - t*0.2);
-      const bottom = Math.random() * 15 * (1 - t*0.2);
-      glitch.style.clipPath = 'inset(' + top + '% 0 ' + bottom + '% 0)';
-      // slight page-wide micro-shake for key elements
-      const pageShift = 'translate(' + (x*0.15) + 'px,' + (y*0.15) + 'px)';
-      document.querySelectorAll('header, nav, .entry, .year-head').forEach(el => {
-        el.style.transform = pageShift;
-      });
-    } else {
-      glitch.style.transform = 'translate(0px,0px) rotate(0deg)';
-      glitch.style.clipPath = 'inset(0 0 0 0)';
-      document.querySelectorAll('header, nav, .entry, .year-head').forEach(el => {
-        el.style.transform = 'none';
-      });
+    // background jitter ("glitch shake"), especially near bottom
+    let offsetX = 0, offsetY = 0;
+    if (progress > 0.7) {
+      const intensity = (progress - 0.7) * 60; // up to ~18px shift
+      offsetX = (Math.random() - 0.5) * intensity;
+      offsetY = (Math.random() - 0.5) * intensity;
     }
-    ticking = false;
+    document.body.style.backgroundPosition = offsetX + 'px ' + offsetY + 'px';
   }
 
-  function onScroll() {
-    if (!ticking) {
-      window.requestAnimationFrame(update);
-      ticking = true;
-    }
-  }
+  window.addEventListener('scroll', () => {
+    window.requestAnimationFrame(update);
+  }, {passive:true});
 
-  window.addEventListener('scroll', onScroll, {passive:true});
-  // trigger once on load
   update();
 })();
 </script></body>
