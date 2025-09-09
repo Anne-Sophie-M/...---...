@@ -49,15 +49,15 @@ nav.years a {
 section.year {
   width:min(1100px,92%);
   margin:30px auto;
-  border:1px solid rgba(255,255,255,0.2);
+  border:1px solid rgba(255,255,255,0.1);
   border-radius:16px;
-  background: rgba(10,10,30,0.9); /* bleu très foncé */
+  background: rgba(10,10,30,0.8); /* bleu très foncé semi-opaque */
   box-shadow:0 6px 20px rgba(0,0,0,0.5);
   overflow:hidden;
 }
 
 .year-head {
-  background: rgba(10,10,30,0.95);
+  background: rgba(10,10,30,0.9); /* bleu très foncé */
   padding:12px 18px;
   font-weight:bold;
   font-size:20px;
@@ -75,7 +75,7 @@ section.year {
 
 .month {
   flex:1 1 220px;
-  background: rgba(10,10,30,0.95);
+  background: rgba(10,10,30,0.95); /* bleu très foncé semi-opaque */
   border:1px solid rgba(255,255,255,0.08);
   border-radius:12px;
   padding:10px 12px;
@@ -95,20 +95,31 @@ section.year {
 }
 
 .entry {
-  background: rgba(10,10,30,0.95);
+  background: rgba(10,10,30,0.95); /* bleu très foncé semi-opaque */
   padding:8px 10px;
   border-radius:8px;
   border:1px solid rgba(255,255,255,0.08);
   text-decoration:none;
   color:#f2f2f2;
   font-size:14px;
-  transition:background 0.2s;
+  transition: background 0.2s;
 }
 
-.entry:hover { background: rgba(20,20,60,0.95); }
+.entry:hover {
+  background: rgba(20,20,60,0.95); /* légèrement plus clair au hover */
+}
 
-.entry .date { font-weight:bold; font-size:13px; color:#ffb3b3; }
-.entry .label { font-style:italic; color:#ccc; font-size:12px; }
+.entry .date {
+  font-weight:bold;
+  font-size:13px;
+  color:#ffb3b3;
+}
+
+.entry .label {
+  font-style:italic;
+  color:#ccc;
+  font-size:12px;
+}
 
 footer {
   text-align:center;
