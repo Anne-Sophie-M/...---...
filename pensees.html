@@ -133,38 +133,48 @@ footer {
 .year2021, .year-head.year2021 { background: rgba(240, 10, 10, 0.85); }
 
 /* Calque sombre et glitch par-dessus le background */
-body::before {
-  content: "";
+
+/* Overlays for progressive darkening + glitch (stronger, JS-driven) */
+.overlay-dark, .overlay-glitch {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  background: rgba(0,0,0,0);
-  mix-blend-mode: multiply;
-  z-index: 0;
-  transition: background 0.2s linear;
+  display: block;
 }
 
-body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  background: url("images/glitch.png");
+/* Make sure overlays sit above the background but under the page content */
+body > .overlay-dark, body > .overlay-glitch { z-index: 0; }
+body > *:not(.overlay-dark):not(.overlay-glitch) { position: relative; z-index: 1; }
+
+.overlay-dark {
+  background: rgba(0,0,0,0); /* will be updated by JS */
+  mix-blend-mode: multiply;
+  transition: background 180ms linear;
+  will-change: background;
+}
+
+.overlay-glitch {
+  background-image: url('images/glitch.png'); /* image bruit/glitch — must exist */
+  background-repeat: repeat;
   background-size: cover;
-  opacity: 0;
+  opacity: 0; /* will be ramped by JS */
   mix-blend-mode: screen;
-  z-index: 0;
-  transition: opacity 0.2s linear, transform 0.1s;
+  transition: opacity 150ms linear, transform 120ms linear, filter 120ms linear, clip-path 120ms linear;
+  will-change: opacity, transform, filter, clip-path;
+  /* slight smoothing */
+  image-rendering: optimizeSpeed;
+}
+
+/* Optional: micro-shifts for some elements to enhance the "shake" perception */
+.entry, header, nav, .year-head {
+  transition: transform 120ms linear;
 }
 </style>
 </head>
-<body>
+<body><div aria-hidden="true" class="overlay-dark"></div><div aria-hidden="true" class="overlay-glitch"></div>
 <header>
 <h1>Pensées</h1>
 <div class="sub">Fragments intimes, 2017–2021</div>
@@ -181,33 +191,73 @@ body::after {
   ©RUST9
 </footer>
 <script>
-window.addEventListener("scroll", () => {
-  const scrollY = window.scrollY;
-  const docHeight = document.body.scrollHeight - window.innerHeight;
-  const progress = scrollY / docHeight; // valeur entre 0 et 1
+(function(){
+  const dark = document.querySelector('.overlay-dark');
+  const glitch = document.querySelector('.overlay-glitch');
+  if (!dark || !glitch) return;
 
-  // assombrissement progressif
-  const darkOpacity = Math.min(progress * 0.7, 0.7);
-  document.body.style.setProperty("--dark-opacity", darkOpacity);
+  let ticking = false;
 
-  // glitch visible en bas
-  const glitchOpacity = Math.min(progress * 1.2, 1);
-  document.body.style.setProperty("--glitch-opacity", glitchOpacity);
+  function update() {
+    const scrollY = window.scrollY || window.pageYOffset;
+    const docHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight) - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollY / docHeight) : 0;
 
-  // appliquer via CSSOM
-  const sheet = document.styleSheets[0];
-  sheet.insertRule(`body::before { background: rgba(0,0,0,${darkOpacity}); }`, sheet.cssRules.length);
-  sheet.insertRule(`body::after { opacity: ${glitchOpacity}; }`, sheet.cssRules.length);
+    // darkness ramps from 0 to 0.85
+    const darkOpacity = Math.min(progress * 0.85, 0.85);
+    dark.style.background = 'rgba(0,0,0,' + darkOpacity + ')';
 
-  // effet de secousses glitch (uniquement en bas de page)
-  if (progress > 0.7) {
-    const intensity = (progress - 0.7) * 20; // augmente avec le scroll
-    const offsetX = (Math.random() - 0.5) * intensity;
-    const offsetY = (Math.random() - 0.5) * intensity;
-    const hue = Math.floor(Math.random() * 40 - 20); // variation de teinte
-    sheet.insertRule(`body::after { transform: translate(${offsetX}px, ${offsetY}px) hue-rotate(${hue}deg); }`, sheet.cssRules.length);
+    // glitch appears progressively after ~10% scroll
+    const glitchStart = 0.10;
+    const glitchProgress = progress <= glitchStart ? 0 : (progress - glitchStart) / (1 - glitchStart);
+    const glitchOpacity = Math.min(glitchProgress * 1.15, 1);
+    glitch.style.opacity = glitchOpacity;
+
+    // subtle hue & saturation variation with scroll
+    const hue = Math.round((progress) * 40 - 20); // -20deg .. +20deg
+    const sat = 1 + progress * 0.9;
+    glitch.style.filter = 'hue-rotate(' + hue + 'deg) saturate(' + sat + ')';
+
+    // when near bottom, apply strong shake/glitch; intensity ramps from 0 at 85% to 1 at 100%
+    const shakeStart = 0.85;
+    if (progress > shakeStart) {
+      const t = Math.min((progress - shakeStart) / (1 - shakeStart), 1); // 0..1
+      // intensity scaling
+      const maxOffset = 30 * t; // px
+      const x = (Math.random() * 2 - 1) * maxOffset;
+      const y = (Math.random() * 2 - 1) * maxOffset;
+      const rot = (Math.random() * 2 - 1) * 6 * t; // degrees
+      glitch.style.transform = 'translate(' + x + 'px, ' + y + 'px) rotate(' + rot + 'deg)';
+      // random clip slices for cinematic glitch
+      const top = Math.random() * 15 * (1 - t*0.2);
+      const bottom = Math.random() * 15 * (1 - t*0.2);
+      glitch.style.clipPath = 'inset(' + top + '% 0 ' + bottom + '% 0)';
+      // slight page-wide micro-shake for key elements
+      const pageShift = 'translate(' + (x*0.15) + 'px,' + (y*0.15) + 'px)';
+      document.querySelectorAll('header, nav, .entry, .year-head').forEach(el => {
+        el.style.transform = pageShift;
+      });
+    } else {
+      glitch.style.transform = 'translate(0px,0px) rotate(0deg)';
+      glitch.style.clipPath = 'inset(0 0 0 0)';
+      document.querySelectorAll('header, nav, .entry, .year-head').forEach(el => {
+        el.style.transform = 'none';
+      });
+    }
+    ticking = false;
   }
-});
+
+  function onScroll() {
+    if (!ticking) {
+      window.requestAnimationFrame(update);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  // trigger once on load
+  update();
+})();
 </script></body>
 </html>
 <section class="year year2017" id="y2017">
