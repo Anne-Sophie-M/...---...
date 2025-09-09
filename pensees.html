@@ -12,9 +12,10 @@ body {
   background: url("images/background.jpg") no-repeat center center fixed;
   background-size: cover;
   color: white;
+  position: relative;
 }
 
-/* Overlay léger optionnel */
+/* Overlay léger sur tout le fond */
 body::before {
   content: "";
   position: fixed;
@@ -54,7 +55,7 @@ nav.years a {
   padding:6px 14px;
   border:1px solid rgba(255,255,255,0.2);
   border-radius:20px;
-  background: rgba(10,10,30,0.95); /* bleu très foncé */
+  background: rgba(10,10,30,0.95);
   font-size:14px;
 }
 
@@ -65,7 +66,7 @@ section.year {
   border:1px solid rgba(255,255,255,0.2);
   border-radius:16px;
   background: rgba(10,10,30,0.9); /* bleu très foncé */
-  box-shadow:0 6px 20px rgba(0,0,0,0.8);
+  box-shadow:0 6px 20px rgba(0,0,0,0.6);
   overflow:hidden;
 }
 
@@ -81,6 +82,13 @@ section.year {
 }
 
 /* Bloc des mois */
+.months {
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:18px;
+}
+
 .month {
   flex:1 1 220px;
   background: rgba(10,10,30,0.95);
@@ -104,18 +112,19 @@ section.year {
 }
 
 .entry {
-  background: rgba(10,10,30,0.95); /* bleu très foncé */
+  background: rgba(10,10,30,0.95);
   padding:8px 10px;
   border-radius:8px;
-  border:1px solid rgba(255,255,255,0.2);
+  border:1px solid rgba(255,255,255,0.08);
   text-decoration:none;
   color:#f2f2f2;
   font-size:14px;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .entry:hover { 
-  background: rgba(20,20,60,0.95); /* un peu plus clair au survol */
+  background: rgba(20,20,60,0.95); /* un peu plus clair */
+  transform: translateY(-2px); /* léger effet hover */
 }
 
 .entry .date { font-weight:bold; font-size:13px; color:#ffb3b3; }
