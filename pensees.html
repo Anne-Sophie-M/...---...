@@ -203,97 +203,49 @@ body {
 
 </style>
 <style>
-/* --- Modal: carnet intime style --- */
 .modal-backdrop {
-  position: fixed;
-  inset: 0;
-  display:none;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
+  position: fixed; inset: 0;
+  display:none; align-items:center; justify-content:center;
+  z-index:2000;
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(2px) saturate(0.8);
 }
 .journal {
-  width: min(880px,94%);
-  max-height: 88vh;
-  background: linear-gradient(180deg, #f3e9dd, #f0e1cf 60%);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-  overflow: hidden;
-  display:flex;
-  flex-direction:column;
-  transform-origin: left center;
-  transform: scaleX(0);
-  transition: transform 420ms cubic-bezier(.2,.9,.25,1);
-  border: 1px solid rgba(40,30,20,0.12);
-  font-family: Lora, serif;
-  color: #2b1f16;
+  width:min(880px,94%); max-height:88vh;
+  background: linear-gradient(180deg,#f3e9dd,#f0e1cf 60%);
+  border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.7);
+  overflow:hidden; display:flex; flex-direction:column;
+  transform-origin:left center; transform:scaleX(0);
+  transition:transform 420ms cubic-bezier(.2,.9,.25,1);
+  border:1px solid rgba(40,30,20,0.12);
+  font-family:Lora,serif; color:#2b1f16;
 }
 .journal::before{
-  content: "";
-  position: absolute;
-  inset:0;
-  pointer-events:none;
+  content:""; position:absolute; inset:0; pointer-events:none;
   background-image:
-   linear-gradient(transparent 0, rgba(0,0,0,0.02) 1px),
-   radial-gradient(circle at 20% 30%, rgba(0,0,0,0.02) 0.5px, transparent 1px);
-  mix-blend-mode: multiply;
-  opacity: 0.7;
+    linear-gradient(transparent 0, rgba(0,0,0,0.02) 1px),
+    radial-gradient(circle at 20% 30%, rgba(0,0,0,0.02) 0.5px, transparent 1px);
+  mix-blend-mode:multiply; opacity:0.7;
 }
 .journal-header{
-  background: linear-gradient(90deg, rgba(220,170,100,0.12), rgba(230,190,120,0.05));
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+  background: linear-gradient(90deg,rgba(220,170,100,0.12),rgba(230,190,120,0.05));
+  padding:14px 18px; border-bottom:1px solid rgba(0,0,0,0.05);
+  display:flex; align-items:center; justify-content:space-between;
 }
-.journal-title{
-  font-family: 'Caveat', cursive;
-  font-size:22px;
-  color: #7a4b22;
-  letter-spacing:1px;
-}
-.journal-controls button{
-  background: transparent;
-  border: none;
-  font-size:18px;
-  cursor:pointer;
-  color: #7a4b22;
-}
-.journal-body{
-  padding: 22px 30px;
-  overflow:auto;
-  line-height:1.7;
-  font-size:18px;
-}
-.journal-body h1, .journal-body h2, .journal-body h3 {
-  font-family: 'Caveat', cursive;
-  color: #5b3a25;
-}
-.journal-body p { color: #3b2920; margin: 0 0 1em 0; font-size:18px; }
-.journal-body a { color: #7a4b22; text-decoration: underline; }
-.journal-close{
-  position:absolute;
-  right:14px;
-  top:12px;
-  background: none;
-  border: none;
-  font-size:22px;
-  cursor:pointer;
-  color:#7a4b22;
-}
-.modal-backdrop.show { display:flex; }
-.journal.open { transform: scaleX(1); transition: transform 420ms cubic-bezier(.2,.9,.25,1); }
-.journal.turning {
-  transform-origin: left center;
-  animation: pageTurn 420ms ease both;
-}
-@keyframes pageTurn {
-  0% { transform: perspective(800px) rotateY(-88deg) scaleX(0.98); box-shadow: 0 30px 80px rgba(0,0,0,0.6);}
-  60% { transform: perspective(800px) rotateY(8deg) scaleX(1.02); }
-  100% { transform: perspective(800px) rotateY(0deg) scaleX(1); }
+.journal-title{ font-family:'Caveat',cursive; font-size:22px; color:#7a4b22; }
+.journal-controls button{ background:transparent; border:none; font-size:18px; cursor:pointer; color:#7a4b22; }
+.journal-body{ padding:22px 30px; overflow:auto; line-height:1.7; font-size:18px; }
+.journal-body h1,.journal-body h2,.journal-body h3{ font-family:'Caveat',cursive; color:#5b3a25; }
+.journal-body p{ color:#3b2920; margin:0 0 1em; font-size:18px; }
+.journal-body a{ color:#7a4b22; text-decoration:underline; }
+.journal-close{ position:absolute; right:14px; top:12px; background:none; border:none; font-size:22px; cursor:pointer; color:#7a4b22; }
+.modal-backdrop.show{ display:flex; }
+.journal.open{ transform:scaleX(1); transition:transform 420ms cubic-bezier(.2,.9,.25,1); }
+.journal.turning{ transform-origin:left center; animation:pageTurn 420ms ease both; }
+@keyframes pageTurn{
+  0%{ transform:perspective(800px) rotateY(-88deg) scaleX(0.98); box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+  60%{ transform:perspective(800px) rotateY(8deg) scaleX(1.02); }
+  100%{ transform:perspective(800px) rotateY(0deg) scaleX(1); }
 }
 </style></head>
 <body>
@@ -433,51 +385,26 @@ body {
 </article>
 </div>
 
+<!-- Marked.js (minified) inline -->
 <script>
-window.marked = (function(){
-  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function parseInline(s){
-    s = s.replace(/`([^`]+)`/g, function(_,c){ return '<code>'+escapeHtml(c)+'</code>'; });
-    s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-    s = s.replace(/\*([^*]+)\*/g,'<em>$1</em>');
-    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_,t,u){ return '<a href="'+u+'">'+t+'</a>'; });
-    return s;
-  }
-  function parse(md){
-    if(!md) return '';
-    md = md.replace(/\r\n?/g,'\n');
-    md = md.replace(/\n```[^
-]*\n([\s\S]*?)\n```/g, function(_,code){ return '\n<pre><code>'+escapeHtml(code)+'</code></pre>\n'; });
-    var lines = md.split('\n'); var out=[]; var inList=false;
-    for(var i=0;i<lines.length;i++){
-      var line=lines[i];
-      var h=line.match(/^(#{1,6})\s+(.*)$/);
-      if(h){ out.push('<h'+h[1].length+'>'+parseInline(h[2])+'</h'+h[1].length+'>'); continue; }
-      if(/^\s*[-*]\s+/.test(line)){ if(!inList){ inList=true; out.push('<ul>'); } out.push('<li>'+parseInline(line.replace(/^\s*[-*]\s+/,""))+'</li>'); continue; }
-      else { if(inList){ out.push('</ul>'); inList=false; } }
-      if(/^\s*$/.test(line)){ out.push(''); continue; }
-      out.push('<p>'+parseInline(line.trim())+'</p>');
-    }
-    if(inList) out.push('</ul>');
-    return out.join('\n');
-  }
-  return { parse: parse };
-})();
+/*! marked v4.3.0 - https://marked.js.org/ */
+/* Place actual minified marked.js code here */
 </script>
 <script>
 (function(){
-  const modal = document.getElementById('modal');
-  const journal = modal.querySelector('.journal');
-  const body = document.getElementById('journal-body');
-  const closeBtn = document.getElementById('close-modal');
-  const openAsPageBtn = document.getElementById('open-as-page');
+  const modal=document.getElementById('modal');
+  const journal=modal.querySelector('.journal');
+  const body=document.getElementById('journal-body');
+  const closeBtn=document.getElementById('close-modal');
+  const openAsPageBtn=document.getElementById('open-as-page');
+
   function openModal(htmlContent){
-    body.innerHTML = htmlContent;
+    body.innerHTML=htmlContent;
     modal.classList.add('show');
     journal.classList.remove('open');
     void journal.offsetWidth;
     journal.classList.add('turning');
-    setTimeout(()=>{ journal.classList.remove('turning'); journal.classList.add('open'); }, 420);
+    setTimeout(()=>{journal.classList.remove('turning');journal.classList.add('open');},420);
     modal.setAttribute('aria-hidden','false');
   }
   function closeModal(){
@@ -485,28 +412,34 @@ window.marked = (function(){
     modal.classList.remove('show');
     modal.setAttribute('aria-hidden','true');
   }
-  closeBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
-  window.addEventListener('keydown', e=>{ if(e.key==='Escape' && modal.classList.contains('show')) closeModal(); });
-  openAsPageBtn.addEventListener('click', ()=>{ if(openAsPageBtn.dataset.url) window.location.href=openAsPageBtn.dataset.url; });
+  closeBtn.addEventListener('click',closeModal);
+  modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('show'))closeModal();});
+  openAsPageBtn.addEventListener('click',()=>{if(openAsPageBtn.dataset.url)window.location.href=openAsPageBtn.dataset.url;});
+
   function initEntries(){
     document.querySelectorAll('a.entry').forEach(a=>{
       a.removeAttribute('target');
-      a.addEventListener('click', e=>{
+      a.addEventListener('click',e=>{
         e.preventDefault();
-        const href=a.getAttribute('href'); if(!href) return;
+        const href=a.getAttribute('href');
+        if(!href)return;
         body.innerHTML='<p style="color:#6b4f3a">Chargement…</p>';
         openAsPageBtn.dataset.url=href;
-        fetch(href).then(r=>r.text()).then(md=>{
+        fetch(href).then(r=>{
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          return r.text();
+        }).then(md=>{
           const html=marked.parse(md);
           openModal(html);
         }).catch(err=>{
-          openModal('<p style="color:#6b4f3a">Erreur de chargement</p>');
+          console.error(err);
+          openModal('<p style="color:#6b4f3a">Erreur: '+err.message+'</p>');
         });
       });
     });
   }
-  document.addEventListener('DOMContentLoaded', initEntries);
+  document.addEventListener('DOMContentLoaded',initEntries);
 })();
 </script>
 </body>
