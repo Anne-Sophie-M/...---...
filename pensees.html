@@ -201,6 +201,63 @@ body {
   pointer-events:none;
 }
 
+
+
+/* === Style ambiance carnet intime sombre/chaud === */
+.modal-content {
+  background: #2b1d18;
+  color: #f5e6d3;
+  background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'),
+                    linear-gradient(to bottom right, #3a261e, #2b1d18);
+  background-blend-mode: multiply;
+  border: 2px solid #d4a373;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.7);
+  font-family: 'Lora', serif;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.modal-content::before {
+  content: "✦ Journal Intime ✦";
+  display: block;
+  text-align: center;
+  font-family: 'Caveat', cursive;
+  font-size: 22px;
+  color: #e6c89c;
+  margin-bottom: 14px;
+  text-shadow: 0 0 6px rgba(255,220,180,0.4);
+}
+.close {
+  color: #e6c89c;
+}
+.close:hover {
+  color: #ffddaa;
+}
+#modal-text h1, #modal-text h2, #modal-text h3 {
+  font-family: 'Caveat', cursive;
+  color: #ffddaa;
+}
+#modal-text p {
+  margin-bottom: 1em;
+}
+
+
+
+/* === Animations ouverture carnet === */
+@keyframes openDiary {
+  0% { transform: scale(0.8) rotateX(-15deg); opacity: 0; }
+  100% { transform: scale(1) rotateX(0); opacity: 1; }
+}
+@keyframes closeDiary {
+  0% { transform: scale(1) rotateX(0); opacity: 1; }
+  100% { transform: scale(0.8) rotateX(-15deg); opacity: 0; }
+}
+.modal.show .modal-content {
+  animation: openDiary 0.4s ease forwards;
+}
+.modal.hide .modal-content {
+  animation: closeDiary 0.3s ease forwards;
+}
+
 </style>
 </head>
 <body>
@@ -323,6 +380,54 @@ body {
   handle();
 })();
 </script>
+
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="modal-text">Chargement...</div>
+  </div>
+</div>
+
+<!-- Charger Marked.js pour transformer Markdown en HTML -->
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const modal = document.getElementById('modal');
+const modalText = document.getElementById('modal-text');
+const closeBtn = document.querySelector('.close');
+
+document.querySelectorAll('.entry').forEach(entry => {
+  entry.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const url = this.getAttribute('href');
+    try {
+      const response = await fetch(url);
+      let text = await response.text();
+      modalText.innerHTML = marked.parse(text);
+    } catch (err) {
+      modalText.innerText = "Erreur de chargement.";
+    }
+    modal.classList.remove('hide');
+    modal.classList.add('show');
+    modal.style.display = 'block';
+  });
+});
+
+closeBtn.onclick = function() {
+  modal.classList.remove('show');
+  modal.classList.add('hide');
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.classList.remove('show');
+    modal.classList.add('hide');
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+  }
+}
+</script>
+
 
 </body>
 </html>
