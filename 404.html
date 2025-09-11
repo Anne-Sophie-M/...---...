@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ultimate Psyché Glitch & Stress Audio</title>
+<title>Ultra Chaotic Glitch & Audio</title>
 <style>
   html, body {
     margin: 0;
@@ -11,7 +11,6 @@
     width: 100%;
     overflow: hidden;
     background: black;
-    transition: filter 0.3s ease;
   }
   canvas {
     position: fixed;
@@ -45,13 +44,15 @@
 // ---- Images & Audio ----
 const images = [
   "images/image1.jpg",
-  
+  "images/image2.jpg",
+  "images/image3.jpg",
   "https://picsum.photos/1920/1080?random=1",
   "https://picsum.photos/1920/1080?random=2"
 ];
 const audios = [
   "audio/audio1.mp3",
-
+  "audio/audio2.mp3",
+  "audio/audio3.mp3"
 ];
 
 // ---- Canvas Setup ----
@@ -62,7 +63,7 @@ const randomImage = images[Math.floor(Math.random()*images.length)];
 img.crossOrigin = "anonymous";
 img.src = randomImage;
 
-// ---- Audio Setup Web Audio API ----
+// ---- Audio Setup ----
 const audioElement = document.getElementById("audio");
 const randomAudio = audios[Math.floor(Math.random()*audios.length)];
 audioElement.src = randomAudio;
@@ -77,7 +78,7 @@ source.connect(distortion);
 distortion.connect(filter);
 filter.connect(gainNode);
 gainNode.connect(audioCtx.destination);
-gainNode.gain.value = 1; // volume constant
+gainNode.gain.value = 1;
 
 // fonction distorsion
 function makeDistortionCurve(amount) {
@@ -103,21 +104,31 @@ startButton.addEventListener("click", () => {
 // ---- Détérioration progressive ----
 let clickCount = 0;
 const maxClicks = 47;
+let ratio = 0;
 
-// dessiner l'image initiale dès le chargement
+// dessiner image initiale
 img.onload = () => {
   canvas.width = img.width;
   canvas.height = img.height;
-  drawImage(0); // image normale initiale
 };
 
-// fonction pour dessiner l'image avec glitch / pixelisation / fractures
-function drawImage(ratio = 0) {
+// clic : augmenter ratio
+document.body.addEventListener("click", () => {
+  if(clickCount >= maxClicks) return;
+  clickCount++;
+  ratio = clickCount/maxClicks;
+});
+
+// ---- Animation Loop ----
+function animate() {
+  requestAnimationFrame(animate);
+  if(!img.complete) return;
+
   let w = canvas.width;
   let h = canvas.height;
 
-  // pixelisation croissante
-  const pixelFactor = 1 - 0.8*ratio; // 1 → normal, 0.2 → très pixelisé
+  // pixelisation
+  const pixelFactor = 1 - 0.8*ratio;
   const sw = Math.max(1, Math.floor(w * pixelFactor));
   const sh = Math.max(1, Math.floor(h * pixelFactor));
 
@@ -129,9 +140,9 @@ function drawImage(ratio = 0) {
 
   ctx.drawImage(tempCanvas, 0, 0, w, h);
 
-  // glitch blocs
+  // glitch dynamique
   const blockCount = Math.floor(ratio*250);
-  for (let i=0; i<blockCount; i++) {
+  for(let i=0;i<blockCount;i++){
     const bx = Math.floor(Math.random()*w);
     const by = Math.floor(Math.random()*h);
     const bw = Math.floor(Math.random()*50 + 5);
@@ -142,10 +153,10 @@ function drawImage(ratio = 0) {
     ctx.putImageData(temp, bx+dx, by+dy);
   }
 
-  // bruit aléatoire
+  // bruit aléatoire dynamique
   const numPixels = Math.floor(15000 + ratio*150000);
   const imageData = ctx.getImageData(0,0,w,h);
-  for (let i=0;i<numPixels;i++){
+  for(let i=0;i<numPixels;i++){
     const x = Math.floor(Math.random()*w);
     const y = Math.floor(Math.random()*h);
     const idx = (y*w + x)*4;
@@ -155,13 +166,13 @@ function drawImage(ratio = 0) {
   }
   ctx.putImageData(imageData,0,0);
 
-  // fractures visuelles supplémentaires
+  // fractures dynamiques
   const fractureCount = Math.floor(ratio*50);
-  for (let i=0; i<fractureCount; i++) {
+  for(let i=0;i<fractureCount;i++){
     const x1 = Math.floor(Math.random()*w);
     const y1 = Math.floor(Math.random()*h);
-    const x2 = x1 + Math.floor(Math.random()*100*ratio);
-    const y2 = y1 + Math.floor(Math.random()*100*ratio);
+    const x2 = x1 + Math.floor(Math.random()*100*ratio*(Math.random()-0.5));
+    const y2 = y1 + Math.floor(Math.random()*100*ratio*(Math.random()-0.5));
     ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
     ctx.lineWidth = 1 + ratio*3;
     ctx.beginPath();
@@ -170,31 +181,18 @@ function drawImage(ratio = 0) {
     ctx.stroke();
   }
 
-  // contraste, saturation et hue rotation extrêmes
+  // filtre CSS dynamique
   const contrast = 1 + ratio*5;
   const saturate = 1 + ratio*5;
   const hue = ratio*360;
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
-}
 
-// clic : progression image + audio
-document.body.addEventListener("click", () => {
-  if(clickCount >= maxClicks) return;
-  clickCount++;
-  const ratio = clickCount/maxClicks;
-
-  drawImage(ratio);
-
-  // audio distorsion et stress progressif
+  // audio dynamique
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample = '4x';
   filter.type = 'allpass';
   filter.frequency.value = 500 + Math.random()*ratio*2000;
+  audioElement.playbackRate = 1 + ratio * 0.8 + (Math.random()*0.03);
+}
 
-  // playback rate progressif mais doux pour stress
-  audioElement.playbackRate = 1 + ratio * 0.8 + (Math.random()*0.03); // max ~1.8
-});
-</script>
-
-</body>
-</html>
+animate();
