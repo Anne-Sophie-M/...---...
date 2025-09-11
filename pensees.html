@@ -6,12 +6,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Lora&display=swap" rel="stylesheet"/>
 <style>
-/* CSS du modal et du site comme décrit (abrégé pour l'exemple) */
 body{margin:0;font-family:monospace;background:#222;color:white;}
-/* (insérer ici tout le CSS détaillé de la version modale sombre/chaud) */
+.entry{cursor:pointer;}
+.modal-overlay{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background: rgba(0,0,0,0.6); z-index:2000;
+  opacity:0; pointer-events:none; transition: opacity 0.3s ease;
+}
+.modal-overlay.show{opacity:1; pointer-events:auto;}
+.diary{background:#f5e9dc;color:#3b2b24;max-width:800px;max-height:80vh;overflow:auto;
+  padding:20px;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.5);position:relative;}
+.close-btn{position:absolute;top:10px;right:10px;cursor:pointer;}
+.banner{font-family:'Caveat',cursive;font-size:22px;text-align:center;margin-bottom:10px;}
+.content{font-family:'Lora',serif;font-size:18px;}
 </style>
 </head>
 <body>
+
 <!DOCTYPE html>
 
 <html lang="fr">
@@ -2289,40 +2300,39 @@ body {
   © Archives personnelles — Pensées
 </footer>
 
-<!-- Modal structure -->
+
+<!-- Modal -->
 <div id="penseeModal" class="modal-overlay" aria-hidden="true">
-  <div class="diary-wrap">
-    <div id="diaryBook" class="diary">
-      <div class="paper-texture"></div>
-      <div class="banner">✦ Journal de Pensées ✦</div>
-      <div class="close-btn" id="closeDiary">✕</div>
-      <div class="content" id="diaryContent"><p style="opacity:0.6">Chargement...</p></div>
-    </div>
+  <div class="diary" id="diaryBook">
+    <div class="banner">✦ Journal de Pensées ✦</div>
+    <div class="close-btn" id="closeDiary">✕</div>
+    <div class="content" id="diaryContent"><p style="opacity:0.6">Chargement...</p></div>
   </div>
 </div>
 
-<footer>©RUST9</footer>
-
 <script>
-// marked.js intégré
-// (ici insérer marked.js complet minifié)
+// Failed to fetch marked.min.js: <urlopen error [Errno -3] Temporary failure in name resolution>
 </script>
 
 <script>
-// Script JS pour interception des clics et affichage du modal
-(function(){
-  const modal=document.getElementById('penseeModal');
-  const diary=document.getElementById('diaryBook');
-  const content=document.getElementById('diaryContent');
-  const closeBtn=document.getElementById('closeDiary');
+(function() {
+  const modal = document.getElementById('penseeModal');
+  const content = document.getElementById('diaryContent');
+  const closeBtn = document.getElementById('closeDiary');
   function openModal(){modal.classList.add('show');}
   function closeModal(){modal.classList.remove('show');}
-  closeBtn.addEventListener('click',closeModal);
-  modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
-  document.addEventListener('click',function(e){
-    const a=e.target.closest('a.entry'); if(!a) return;
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e=>{if(e.target===modal) closeModal();});
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a.entry'); if(!a) return;
     e.preventDefault();
-    fetch(a.href).then(r=>r.text()).then(md=>{content.innerHTML=marked.parse(md);openModal();});
+    fetch(a.getAttribute('href')).then(r=>r.text()).then(md=>{
+      content.innerHTML = marked.parse(md);
+      openModal();
+    }).catch(err=>{
+      content.innerHTML = '<p style="color:red">Erreur chargement : '+err+'</p>';
+      openModal();
+    });
   });
 })();
 </script>
