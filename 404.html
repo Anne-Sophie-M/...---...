@@ -2,14 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>404</title>
-  <link rel="stylesheet" href="style.css">
+  <title>L'antre</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: black;
+    }
+    #bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+    #startButton {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      z-index: 10;
+    }
+  </style>
 </head>
 <body>
-  <div class="center">
-    <h1>404</h1>
-    <p class="warning">you shouldn’t be here.</p>
-    <nav><a href="index.html">back</a></nav>
-  </div>
+
+<img id="bg" src="" alt="Background Image">
+<audio id="audio" loop></audio>
+<button id="startButton"></button>
+
+<script>
+  const images = [
+    "images/image1.jpg",
+    "images/image2.jpg",
+    "images/image3.jpg"
+  ];
+
+  const audios = [
+    "audio/audio1.mp3",
+    "audio/audio2.mp3",
+    "audio/audio3.mp3"
+  ];
+
+  const randomImage = images[Math.floor(Math.random() * images.length)];
+  const randomAudio = audios[Math.floor(Math.random() * audios.length)];
+
+  document.getElementById("bg").src = randomImage;
+
+  const audioElement = document.getElementById("audio");
+  audioElement.src = randomAudio;
+
+  const startButton = document.getElementById("startButton");
+
+  // Dès que l'utilisateur clique, on lance l'audio
+  startButton.addEventListener("click", () => {
+    audioElement.play();
+    startButton.style.display = "none"; // on cache le bouton après activation
+  });
+</script>
+
 </body>
 </html>
