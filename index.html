@@ -38,17 +38,10 @@
     }
   </script>
 
-  <!-- CSS spécifique au hotspot -->
+  <!-- CSS minimal pour le hotspot -->
   <style>
     body {
-      position: relative; /* nécessaire pour positionner le hotspot */
-      background: url("images/background.jpg") no-repeat center center;
-      background-size: cover;
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
+      position: relative; /* nécessaire pour positionner le hotspot sans toucher au background de style.css */
     }
 
     .hotspot {
@@ -69,8 +62,8 @@
     </nav>
   </div>
 
-  <!-- Hotspot invisible pour la page cachée -->
- <a href="404.html" class="hotspot" id="hotspot"></a>
+  <!-- Hotspot invisible menant à 404.html -->
+  <a href="404.html" class="hotspot" id="hotspot"></a>
 
   <!-- Script pour positionner le hotspot -->
   <script>
