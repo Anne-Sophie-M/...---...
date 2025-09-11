@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>L'Antre</title>
+<title>Random Image & Audio with Deterioration</title>
 <style>
   html, body {
     margin: 0;
@@ -11,12 +11,7 @@
     width: 100%;
     overflow: hidden;
     background: black;
-  }
-  body {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: background-image 1s ease-in;
+    transition: filter 0.5s ease;
   }
   #startButton {
     position: fixed;
@@ -38,30 +33,49 @@
 
 <script>
 const images = [
+  // Images locales ou distantes
   "images/image1.jpg",
- 
+  "https://picsum.photos/1920/1080?random=1",
+  "https://picsum.photos/1920/1080?random=2",
 ];
 
 const audios = [
   "audio/audio1.mp3",
-
+ 
 ];
 
 // Choix aléatoire
 const randomImage = images[Math.floor(Math.random() * images.length)];
 const randomAudio = audios[Math.floor(Math.random() * audios.length)];
 
-// Appliquer comme background
+// Appliquer l'image comme background
 document.body.style.backgroundImage = `url('${randomImage}')`;
+document.body.style.backgroundSize = "cover";
+document.body.style.backgroundPosition = "center";
 
-// Jouer l'audio après clic
+// Audio
 const audioElement = document.getElementById("audio");
 audioElement.src = randomAudio;
 
+// Bouton pour activer l'audio
 const startButton = document.getElementById("startButton");
 startButton.addEventListener("click", () => {
   audioElement.play();
   startButton.style.display = "none";
+});
+
+// Détériorer l'image à chaque clic
+let deterioration = 0;
+document.body.addEventListener("click", () => {
+  deterioration += 0.1; // augmente la détérioration à chaque clic
+  // Mélange de filtres CSS
+  const blur = deterioration * 5;           // flou
+  const gray = Math.min(deterioration,1);   // niveaux de gris
+  const contrast = Math.max(1 - deterioration*0.3,0.3); // contraste réduit
+  const brightness = Math.max(1 - deterioration*0.2,0.3); // luminosité réduite
+
+  document.body.style.filter = 
+    `blur(${blur}px) grayscale(${gray}) contrast(${contrast}) brightness(${brightness})`;
 });
 </script>
 
