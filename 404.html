@@ -40,18 +40,18 @@ canvas {
 <button id="startButton"></button>
 
 <script>
-// === CANVAS SETUP ===
+// --- Canvas setup ---
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// === MEDIA LIST ===
+// --- Media list ---
 const medias = [
   "images/img1.jpg",
   
   "videos/vid1.mp4",
-  
+
 ];
 const choice = medias[Math.floor(Math.random()*medias.length)];
 const isVideo = choice.endsWith(".mp4") || choice.endsWith(".webm");
@@ -72,7 +72,7 @@ if(isVideo){
   img.crossOrigin = 'anonymous';
 }
 
-// === AUDIO SETUP ===
+// --- Audio setup ---
 const audios = ["audio/audio1.mp3",];
 const audioElement = document.getElementById('audio');
 audioElement.src = audios[Math.floor(Math.random()*audios.length)];
@@ -100,42 +100,57 @@ function makeDistortionCurve(amount){
   return curve;
 }
 
-// === INTERACTION ===
-let clickCount=0, maxClicks=47, ratio=0, finalMode=false, scratchPhase=false, scratchCount=0;
+// --- Interaction ---
+let clickCount=0, maxClicks=47, ratio=0;
+let finalMode=false, scratchPhase=false, scratchStart=null;
 document.body.addEventListener('click',()=>{
   if(clickCount<maxClicks) clickCount++;
   ratio = clickCount/maxClicks;
-  if(clickCount===maxClicks) activateFinalMode();
+  if(clickCount===maxClicks) startScratchPhase();
 });
 
 // Start button
 document.getElementById('startButton').addEventListener('click',()=>{
-  audioCtx.resume();
-  audioElement.play();
+  audioCtx.resume().then(()=>{ audioElement.play(); });
   document.getElementById('startButton').style.display='none';
 });
 
-// === FINAL MODE ===
-function activateFinalMode(){
+// --- Scratch phase ---
+function startScratchPhase(){
   finalMode = true;
+  scratchPhase = true;
+  scratchStart = Date.now();
   audioElement.pause();
   audioElement.src = "audio/final_scream.mp3";
   audioElement.loop = true;
   audioElement.play();
-  distortion.curve = makeDistortionCurve(1500);
   document.getElementById('finalText').style.display = 'block';
-  scratchPhase = true;
+  distortion.curve = makeDistortionCurve(1500);
+
+  // 9 sec timer -> crash final
+  setTimeout(()=>{ 
+    scratchPhase = false; 
+    crashFinal(); 
+  }, 9000);
 }
 
-// === SCRATCH EFFECT (black "stylo de colère") ===
+// --- Crash final ---
+function crashFinal(){
+  audioElement.pause();
+  audioElement.src = "audio/end.mp3";
+  audioElement.loop = false;
+  audioElement.play();
+}
+
+// --- Draw scratches ---
 function drawScratches(){
   const text = document.getElementById('finalText');
   const rect = text.getBoundingClientRect();
   ctx.save();
   ctx.translate(rect.left, rect.top);
   ctx.strokeStyle = "rgba(0,0,0,1)"; // noir
-  ctx.lineWidth = Math.random()*6 + 2; // épais pour effet stylo
-  for(let i=0;i<3;i++){
+  ctx.lineWidth = Math.random()*6 + 2;
+  for(let i=0;i<5;i++){
     let x1 = Math.random()*rect.width;
     let y1 = Math.random()*rect.height;
     let x2 = x1 + (Math.random()*100-50);
@@ -146,46 +161,14 @@ function drawScratches(){
     ctx.stroke();
   }
   ctx.restore();
-
-  scratchCount++;
-  if(scratchCount>80){ 
-    freezeAll();
-  }
 }
 
-// === FREEZE EVERYTHING ===
-function freezeAll(){
-  scratchPhase = false;
-  finalMode = false;
-  document.body.style.filter="none";
-  audioElement.pause();
-  audioElement.src = "audio/end.mp3";
-  audioElement.loop = false;
-  audioElement.play();
-}
-
-// === DRAW LOOP ===
+// --- Draw loop ---
 function draw(){
   requestAnimationFrame(draw);
   const w=canvas.width, h=canvas.height;
 
-  if(finalMode){
-    // Crash rouge glitch
-    ctx.clearRect(0,0,w,h);
-    const blockCount = 500;
-    for(let i=0;i<blockCount;i++){
-      const x=Math.random()*w, y=Math.random()*h;
-      const bw=Math.random()*60+20, bh=Math.random()*60+20;
-      ctx.fillStyle = `rgba(255,0,0,${Math.random()*0.7+0.3})`;
-      ctx.fillRect(x,y,bw,bh);
-    }
-    if(scratchPhase && Math.random()<0.3){
-      drawScratches();
-    }
-    return;
-  }
-
-  // Normal animation avant le crash
+  // --- Draw media ---
   let sourceEl = isVideo ? video : img;
   if(!sourceEl) return;
   if(isVideo && video.readyState < 2) return;
@@ -202,7 +185,7 @@ function draw(){
   ctx.clearRect(0,0,w,h);
   ctx.drawImage(temp,0,0,sw,sh,0,0,w,h);
 
-  // Glitch blocs
+  // --- Glitch blocs ---
   const blockCount = Math.floor(ratio*200);
   for(let i=0;i<blockCount;i++){
     const bx=Math.random()*w, by=Math.random()*h;
@@ -213,7 +196,7 @@ function draw(){
     ctx.putImageData(tempData,bx+dx,by+dy);
   }
 
-  // Fractures
+  // --- Fractures ---
   const fracCount = Math.floor(ratio*50);
   const time = Date.now()*0.002;
   for(let i=0;i<fracCount;i++){
@@ -226,18 +209,29 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
   }
 
-  // Filtres
+  // --- CSS Filters ---
   const contrast = 1+ratio*5;
   const saturate = 1+ratio*5;
   const hue = ratio*360;
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-  // Audio progression
+  // --- Audio progression ---
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample='4x';
   filter.type='allpass';
   filter.frequency.value = 500+Math.random()*ratio*2000;
   audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
+
+  // --- Scratch effect ---
+  if(scratchPhase){
+    drawScratches();
+  }
+
+  // --- Crash final red overlay ---
+  if(!scratchPhase && finalMode && scratchStart){
+    ctx.fillStyle = "rgba(255,0,0,0.7)";
+    ctx.fillRect(0,0,w,h);
+  }
 }
 
 draw();
