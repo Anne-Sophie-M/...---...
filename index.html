@@ -6,7 +6,6 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* Corps de la page */
     body {
       margin: 0;
       padding: 0;
@@ -18,7 +17,6 @@
       position: relative;
     }
 
-    /* Conteneur de l'image centrée */
     .image-container {
       position: absolute;
       top: 50%;
@@ -28,21 +26,18 @@
       max-width: 1920px;
     }
 
-    /* Image responsive */
     #bg-image {
       width: 100%;
       height: auto;
       display: block;
     }
 
-    /* Hotspot invisible (mettre rgba(255,0,0,0.3) pour tester) */
     .hotspot {
       position: absolute;
       cursor: pointer;
       background: rgba(255,0,0,0.3); /* temporaire visible pour test */
     }
 
-    /* Texte et nav centrés */
     .center {
       position: absolute;
       top: 0;
@@ -88,7 +83,6 @@
 <body>
   <div class="image-container">
     <img src="images/background.jpg" alt="dessin" id="bg-image">
-    <!-- Hotspot invisible -->
     <a href="404.html" class="hotspot" id="hotspot"></a>
 
     <div class="center">
@@ -113,8 +107,8 @@
 
       hotspot.style.left = (hotspotBox.x * scaleX) + "px";
       hotspot.style.top = (hotspotBox.y * scaleY) + "px";
-      hotspot.style.width = (hotspotBox.w * scaleX) + "px";
-      hotspot.style.height = (hotspotBox.h * scaleY) + "px";
+      hotspot.style.width = Math.max(hotspotBox.w * scaleX, 15) + "px";  // taille min 15px
+      hotspot.style.height = Math.max(hotspotBox.h * scaleY, 15) + "px"; // taille min 15px
     }
 
     window.addEventListener("resize", updateHotspot);
