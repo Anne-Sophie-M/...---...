@@ -2,37 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FullScreen Audio-Reactive Glitch</title>
+<title>Audio-Reactive Glitch Fullscreen</title>
 <style>
-html, body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
+html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
 </style>
 </head>
 <body>
+
 <canvas id="canvas"></canvas>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
+
 <script>
-// ---- Setup ----
-const images = ["images/image1.jpg","https://picsum.photos/1920/1080?random=1"];
-const audios = ["audio/audio1.mp3",];
-const canvas = document.getElementById("canvas");
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Images & audio
+const images = ["https://picsum.photos/1920/1080?random=1"];
+const audios = ["audio/audio1.mp3"]; // ajoute tes fichiers
+
 // Image setup
 let img = new Image();
-img.crossOrigin="anonymous";
+img.crossOrigin = 'anonymous';
 img.src = images[Math.floor(Math.random()*images.length)];
-const tempCanvas = document.createElement('canvas');
-const tCtx = tempCanvas.getContext('2d');
+
+// Temp canvas pour pixelisation
+const temp = document.createElement('canvas');
+const tctx = temp.getContext('2d');
 
 // Audio setup
-const audioElement = document.getElementById("audio");
+const audioElement = document.getElementById('audio');
 audioElement.src = audios[Math.floor(Math.random()*audios.length)];
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 const source = audioCtx.createMediaElementSource(audioElement);
 const distortion = audioCtx.createWaveShaper();
 const filter = audioCtx.createBiquadFilter();
@@ -43,99 +48,85 @@ distortion.connect(filter);
 filter.connect(gainNode);
 gainNode.connect(analyser);
 analyser.connect(audioCtx.destination);
-gainNode.gain.value=1;
-analyser.fftSize=256;
+gainNode.gain.value = 1;
+analyser.fftSize = 256;
 const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
 function makeDistortionCurve(amount){
   const k = amount;
   const n = 44100;
   const curve = new Float32Array(n);
-  const deg=Math.PI/180;
+  const deg = Math.PI/180;
   for(let i=0;i<n;i++){
     const x = i*2/n-1;
-    curve[i]=((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
+    curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
   }
   return curve;
 }
 
 // Start button
-document.getElementById("startButton").addEventListener("click",()=>{
+document.getElementById('startButton').addEventListener('click',()=>{
   audioCtx.resume();
   audioElement.play();
-  document.getElementById("startButton").style.display="none";
+  document.getElementById('startButton').style.display='none';
 });
 
 // Clicks & ratio
-let clickCount=0, maxClicks=47, ratio=0;
-document.body.addEventListener("click",()=>{if(clickCount<maxClicks) clickCount++; ratio = clickCount/maxClicks;});
+let clickCount = 0, maxClicks = 47, ratio = 0;
+document.body.addEventListener('click',()=>{if(clickCount<maxClicks) clickCount++; ratio = clickCount/maxClicks;});
 
-// Draw & animate
-img.onload=()=>{ tempCanvas.width=1; tempCanvas.height=1; requestAnimationFrame(animate); }
+// Animation
+img.onload = ()=>{
+  temp.width = img.width;
+  temp.height = img.height;
+  requestAnimationFrame(draw);
+}
 
-function animate(){
-  requestAnimationFrame(animate);
+function draw(){
+  requestAnimationFrame(draw);
   if(!img.complete) return;
 
   analyser.getByteFrequencyData(dataArray);
-  const volume = dataArray.reduce((a,b)=>a+b,0)/dataArray.length/255; // 0→1
+  const volume = dataArray.reduce((a,b)=>a+b,0)/dataArray.length/255; // 0->1
 
-  const w=canvas.width, h=canvas.height;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Pixelisation rapide et full screen
+  const scale = 1 - 0.8*ratio;
+  const sw = Math.max(1, Math.floor(img.width*scale));
+  const sh = Math.max(1, Math.floor(img.height*scale));
+  tctx.clearRect(0,0,temp.width,temp.height);
+  tctx.drawImage(img,0,0,img.width,img.height,0,0,sw,sh);
   ctx.clearRect(0,0,w,h);
-
-  // Pixelisation full screen
-  const pixelSize = 1 + Math.floor(30 * ratio);
   ctx.imageSmoothingEnabled = false;
-  for(let y=0; y<h; y+=pixelSize){
-    for(let x=0; x<w; x+=pixelSize){
-      const sx = Math.floor(x / w * img.width);
-      const sy = Math.floor(y / h * img.height);
-      tCtx.clearRect(0,0,1,1);
-      tCtx.drawImage(img,sx,sy,1,1,0,0,1,1);
-      const color = tCtx.getImageData(0,0,1,1).data;
-      ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},1)`;
-      ctx.fillRect(x,y,pixelSize,pixelSize);
-    }
-  }
+  ctx.drawImage(temp,0,0,sw,sh,0,0,w,h);
 
-  // Glitch dynamique
-  const blockCount = Math.floor(ratio*250);
+  // Glitch
+  const blockCount = Math.floor(ratio*200);
   for(let i=0;i<blockCount;i++){
-    const bx=Math.floor(Math.random()*w);
-    const by=Math.floor(Math.random()*h);
-    const bw=Math.floor(Math.random()*50+5);
-    const bh=Math.floor(Math.random()*50+5);
-    const temp = ctx.getImageData(bx,by,bw,bh);
-    const dx=Math.floor((Math.random()-0.5)*250*ratio*volume);
-    const dy=Math.floor((Math.random()-0.5)*250*ratio*volume);
-    ctx.putImageData(temp,bx+dx,by+dy);
+    const bx = Math.floor(Math.random()*w);
+    const by = Math.floor(Math.random()*h);
+    const bw = Math.floor(Math.random()*30 + 5);
+    const bh = Math.floor(Math.random()*30 + 5);
+    const tempData = ctx.getImageData(bx,by,bw,bh);
+    const dx = Math.floor((Math.random()-0.5)*150*ratio*volume);
+    const dy = Math.floor((Math.random()-0.5)*150*ratio*volume);
+    ctx.putImageData(tempData,bx+dx,by+dy);
   }
 
-  // Bruit dynamique
-  const numPixels=Math.floor(15000 + ratio*150000);
-  const imageData = ctx.getImageData(0,0,w,h);
-  for(let i=0;i<numPixels;i++){
-    const x=Math.floor(Math.random()*w);
-    const y=Math.floor(Math.random()*h);
-    const idx=(y*w+x)*4;
-    imageData.data[idx]=Math.random()*255;
-    imageData.data[idx+1]=Math.random()*255;
-    imageData.data[idx+2]=Math.random()*255;
-  }
-  ctx.putImageData(imageData,0,0);
-
-  // Fractures vibrantes audio-réactives
-  const fractureCount = Math.floor(ratio*70);
+  // Fractures audio-réactives
+  const fracCount = Math.floor(ratio*50);
   const time = Date.now()*0.002;
-  for(let i=0;i<fractureCount;i++){
+  for(let i=0;i<fracCount;i++){
     const x1 = Math.floor(Math.random()*w);
     const y1 = Math.floor(Math.random()*h);
     const offsetX = Math.sin(time+i)*50*ratio*volume*2;
     const offsetY = Math.cos(time+i)*50*ratio*volume*2;
     const x2 = x1 + Math.floor(offsetX);
     const y2 = y1 + Math.floor(offsetY);
-    ctx.strokeStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
-    ctx.lineWidth=1+ratio*3;
+    ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+    ctx.lineWidth = 1 + ratio*2;
     ctx.beginPath();
     ctx.moveTo(x1,y1);
     ctx.lineTo(x2,y2);
@@ -143,18 +134,19 @@ function animate(){
   }
 
   // CSS filtre
-  const contrast=1+ratio*5;
-  const saturate=1+ratio*5;
-  const hue=ratio*360;
-  document.body.style.filter=`contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
+  const contrast = 1 + ratio*5;
+  const saturate = 1 + ratio*5;
+  const hue = ratio*360;
+  document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-  // Audio distorsion + playback rate progressif
+  // Audio
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample='4x';
   filter.type='allpass';
-  filter.frequency.value=500 + Math.random()*ratio*2000;
-  audioElement.playbackRate = 1 + ratio*0.8 + (Math.random()*0.03);
+  filter.frequency.value = 500 + Math.random()*ratio*2000;
+  audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
 }
 </script>
+
 </body>
 </html>
