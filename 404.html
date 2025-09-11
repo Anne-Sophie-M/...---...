@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>L'Antre</title>
+<title>Random Image & Audio</title>
 <style>
   html, body {
     margin: 0;
@@ -12,16 +12,11 @@
     overflow: hidden;
     background: black;
   }
-  #bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 1s ease-in;
+  body {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease-in;
   }
   #startButton {
     position: fixed;
@@ -38,7 +33,6 @@
 </head>
 <body>
 
-<img id="bg" src="" alt="Background Image">
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
 
@@ -51,24 +45,22 @@ const images = [
 
 const audios = [
   "audio/audio1.mp3",
-
+  "audio/audio2.mp3",
+  "audio/audio3.mp3"
 ];
 
-const bg = document.getElementById("bg");
-const audioElement = document.getElementById("audio");
-const startButton = document.getElementById("startButton");
-
+// Choix aléatoire
 const randomImage = images[Math.floor(Math.random() * images.length)];
 const randomAudio = audios[Math.floor(Math.random() * audios.length)];
 
-bg.src = randomImage;
-// On attend que l'image soit complètement chargée avant de l'afficher
-bg.onload = () => {
-  bg.style.opacity = 1;
-};
+// Appliquer comme background
+document.body.style.backgroundImage = `url('${randomImage}')`;
 
+// Jouer l'audio après clic
+const audioElement = document.getElementById("audio");
 audioElement.src = randomAudio;
 
+const startButton = document.getElementById("startButton");
 startButton.addEventListener("click", () => {
   audioElement.play();
   startButton.style.display = "none";
