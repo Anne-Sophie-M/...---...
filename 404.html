@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Extreme Glitch & Audio</title>
+<title>Ultimate Glitch & Audio Madness</title>
 <style>
   html, body {
     margin: 0;
@@ -51,7 +51,7 @@ const images = [
 ];
 const audios = [
   "audio/audio1.mp3",
- 
+  
 ];
 
 // ---- Canvas Setup ----
@@ -102,13 +102,13 @@ startButton.addEventListener("click", () => {
 
 // ---- Détérioration progressive ----
 let clickCount = 0;
-const maxClicks = 25;
+const maxClicks = 47;
 
 // dessiner l'image initiale dès le chargement
 img.onload = () => {
   canvas.width = img.width;
   canvas.height = img.height;
-  drawImage(); // image normale initiale
+  drawImage(0); // image normale initiale
 };
 
 // fonction pour dessiner l'image avec glitch / pixelisation selon ratio
@@ -117,7 +117,7 @@ function drawImage(ratio = 0) {
   let h = canvas.height;
 
   // pixelisation : réduire taille et ré-agrandir
-  const pixelFactor = 1 - 0.7*ratio; // 1 → normal, 0.3 → très pixelisé
+  const pixelFactor = 1 - 0.8*ratio; // 1 → normal, 0.2 → très pixelisé
   const sw = Math.max(1, Math.floor(w * pixelFactor));
   const sh = Math.max(1, Math.floor(h * pixelFactor));
 
@@ -132,20 +132,20 @@ function drawImage(ratio = 0) {
   ctx.drawImage(tempCanvas, 0, 0, w, h);
 
   // ajouter glitch blocs
-  const blockCount = Math.floor(ratio*150);
+  const blockCount = Math.floor(ratio*200);
   for (let i=0; i<blockCount; i++) {
     const bx = Math.floor(Math.random()*w);
     const by = Math.floor(Math.random()*h);
-    const bw = Math.floor(Math.random()*30 + 5);
-    const bh = Math.floor(Math.random()*30 + 5);
+    const bw = Math.floor(Math.random()*40 + 5);
+    const bh = Math.floor(Math.random()*40 + 5);
     const temp = ctx.getImageData(bx, by, bw, bh);
-    const dx = Math.floor((Math.random()-0.5)*100*ratio);
-    const dy = Math.floor((Math.random()-0.5)*100*ratio);
+    const dx = Math.floor((Math.random()-0.5)*200*ratio);
+    const dy = Math.floor((Math.random()-0.5)*200*ratio);
     ctx.putImageData(temp, bx+dx, by+dy);
   }
 
   // ajouter bruit aléatoire
-  const numPixels = Math.floor(5000 + ratio*70000);
+  const numPixels = Math.floor(10000 + ratio*120000);
   const imageData = ctx.getImageData(0,0,w,h);
   for (let i=0;i<numPixels;i++){
     const x = Math.floor(Math.random()*w);
@@ -157,10 +157,11 @@ function drawImage(ratio = 0) {
   }
   ctx.putImageData(imageData,0,0);
 
-  // CSS : contraste et saturation extrêmes
-  const contrast = 1 + ratio*4; // jusqu'à 5x
-  const saturate = 1 + ratio*4; // jusqu'à 5x
-  document.body.style.filter = `contrast(${contrast}) saturate(${saturate})`;
+  // CSS : contraste et saturation extrêmes, virage psychédélique
+  const contrast = 1 + ratio*5; // jusqu'à 6x
+  const saturate = 1 + ratio*5; // jusqu'à 6x
+  const hue = ratio*360; // hue rotation pour psyché extrême
+  document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 }
 
 // événement clic
@@ -173,11 +174,11 @@ document.body.addEventListener("click", () => {
   drawImage(ratio);
 
   // audio distorsion
-  distortion.curve = makeDistortionCurve(ratio*500);
+  distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample = '4x';
   filter.type = 'allpass';
-  filter.frequency.value = 500 + Math.random()*ratio*1000;
-  audioElement.playbackRate = 1 - ratio*0.15 + (Math.random()*0.05);
+  filter.frequency.value = 500 + Math.random()*ratio*2000;
+  audioElement.playbackRate = 1 - ratio*0.2 + (Math.random()*0.05);
 });
 </script>
 
