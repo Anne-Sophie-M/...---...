@@ -6,43 +6,49 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    html, body {
+    /* Corps de la page */
+    body {
       margin: 0;
       padding: 0;
       font-family: monospace;
       height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background-color: black;
       color: white;
-      background-color: black; /* si le fond derrière l'image est visible */
-    }
-
-    .image-container {
+      overflow: hidden;
       position: relative;
-      width: 100%;
-      max-width: 1920px; /* largeur originale de l'image */
     }
 
+    /* Conteneur de l'image centrée */
+    .image-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      max-width: 1920px;
+    }
+
+    /* Image responsive */
     #bg-image {
       width: 100%;
-      height: auto; /* garde les proportions */
+      height: auto;
       display: block;
     }
 
+    /* Hotspot invisible (mettre rgba(255,0,0,0.3) pour tester) */
     .hotspot {
       position: absolute;
       cursor: pointer;
-      background: rgba(255,0,0,0); /* invisible mais cliquable */
+      background: rgba(255,0,0,0.3); /* temporaire visible pour test */
     }
 
+    /* Texte et nav centrés */
     .center {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       text-align: center;
-      margin-top: 20%; /* si tu veux conserver ton style */
     }
   </style>
 
@@ -82,7 +88,9 @@
 <body>
   <div class="image-container">
     <img src="images/background.jpg" alt="dessin" id="bg-image">
+    <!-- Hotspot invisible -->
     <a href="404.html" class="hotspot" id="hotspot"></a>
+
     <div class="center">
       <h1>MiroirFêlé</h1>
       <p id="unstable"></p>
@@ -103,8 +111,8 @@
       const scaleX = rect.width / 1920;
       const scaleY = rect.height / 1080;
 
-      hotspot.style.left = (hotspotBox.x * scaleX + rect.left) + "px";
-      hotspot.style.top = (hotspotBox.y * scaleY + rect.top) + "px";
+      hotspot.style.left = (hotspotBox.x * scaleX) + "px";
+      hotspot.style.top = (hotspotBox.y * scaleY) + "px";
       hotspot.style.width = (hotspotBox.w * scaleX) + "px";
       hotspot.style.height = (hotspotBox.h * scaleY) + "px";
     }
