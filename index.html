@@ -35,7 +35,7 @@
     .hotspot {
       position: absolute;
       cursor: pointer;
-      background: rgba(255,0,0,0.3); /* temporaire visible pour test */
+      background: rgba(255,0,0,0); /* temporaire visible pour test */
       z-index: 10; /* au-dessus du texte */
     }
 
@@ -97,7 +97,7 @@
   </div>
 
   <script>
-    const hotspotBox = { x: 1600, y: 380, w: 25, h: 25 };
+    const hotspotBox = { x: 1600, y: 380, w: 20, h: 20 };
     const bgImage = document.getElementById("bg-image");
     const hotspot = document.getElementById("hotspot");
 
@@ -108,8 +108,8 @@
 
       hotspot.style.left = (hotspotBox.x * scaleX) + "px";
       hotspot.style.top = (hotspotBox.y * scaleY) + "px";
-      hotspot.style.width = Math.max(hotspotBox.w * scaleX, 15) + "px";
-      hotspot.style.height = Math.max(hotspotBox.h * scaleY, 15) + "px";
+      hotspot.style.width = Math.max(hotspotBox.w * scaleX, 10) + "px";
+      hotspot.style.height = Math.max(hotspotBox.h * scaleY, 10) + "px";
     }
 
     window.addEventListener("resize", updateHotspot);
