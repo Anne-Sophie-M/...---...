@@ -97,7 +97,7 @@
   </div>
 
   <script>
-    const hotspotBox = { x: 1600, y: 430, w: 20, h: 20 };
+    const hotspotBox = { x: 1600, y: 380, w: 25, h: 25 };
     const bgImage = document.getElementById("bg-image");
     const hotspot = document.getElementById("hotspot");
 
@@ -108,8 +108,8 @@
 
       hotspot.style.left = (hotspotBox.x * scaleX) + "px";
       hotspot.style.top = (hotspotBox.y * scaleY) + "px";
-      hotspot.style.width = Math.max(hotspotBox.w * scaleX, 30) + "px";
-      hotspot.style.height = Math.max(hotspotBox.h * scaleY, 30) + "px";
+      hotspot.style.width = Math.max(hotspotBox.w * scaleX, 15) + "px";
+      hotspot.style.height = Math.max(hotspotBox.h * scaleY, 15) + "px";
     }
 
     window.addEventListener("resize", updateHotspot);
