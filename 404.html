@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ultimate Glitch & Stress Audio</title>
+<title>Ultimate Psyché Glitch & Stress Audio</title>
 <style>
   html, body {
     margin: 0;
@@ -45,15 +45,13 @@
 // ---- Images & Audio ----
 const images = [
   "images/image1.jpg",
-  "images/image2.jpg",
-  "images/image3.jpg",
+  
   "https://picsum.photos/1920/1080?random=1",
   "https://picsum.photos/1920/1080?random=2"
 ];
 const audios = [
   "audio/audio1.mp3",
-  "audio/audio2.mp3",
-  "audio/audio3.mp3"
+
 ];
 
 // ---- Canvas Setup ----
@@ -113,12 +111,12 @@ img.onload = () => {
   drawImage(0); // image normale initiale
 };
 
-// fonction pour dessiner l'image avec glitch / pixelisation selon ratio
+// fonction pour dessiner l'image avec glitch / pixelisation / fractures
 function drawImage(ratio = 0) {
   let w = canvas.width;
   let h = canvas.height;
 
-  // pixelisation : réduire taille et ré-agrandir
+  // pixelisation croissante
   const pixelFactor = 1 - 0.8*ratio; // 1 → normal, 0.2 → très pixelisé
   const sw = Math.max(1, Math.floor(w * pixelFactor));
   const sh = Math.max(1, Math.floor(h * pixelFactor));
@@ -131,21 +129,21 @@ function drawImage(ratio = 0) {
 
   ctx.drawImage(tempCanvas, 0, 0, w, h);
 
-  // ajouter glitch blocs
-  const blockCount = Math.floor(ratio*200);
+  // glitch blocs
+  const blockCount = Math.floor(ratio*250);
   for (let i=0; i<blockCount; i++) {
     const bx = Math.floor(Math.random()*w);
     const by = Math.floor(Math.random()*h);
-    const bw = Math.floor(Math.random()*40 + 5);
-    const bh = Math.floor(Math.random()*40 + 5);
+    const bw = Math.floor(Math.random()*50 + 5);
+    const bh = Math.floor(Math.random()*50 + 5);
     const temp = ctx.getImageData(bx, by, bw, bh);
-    const dx = Math.floor((Math.random()-0.5)*200*ratio);
-    const dy = Math.floor((Math.random()-0.5)*200*ratio);
+    const dx = Math.floor((Math.random()-0.5)*250*ratio);
+    const dy = Math.floor((Math.random()-0.5)*250*ratio);
     ctx.putImageData(temp, bx+dx, by+dy);
   }
 
-  // ajouter bruit aléatoire
-  const numPixels = Math.floor(10000 + ratio*120000);
+  // bruit aléatoire
+  const numPixels = Math.floor(15000 + ratio*150000);
   const imageData = ctx.getImageData(0,0,w,h);
   for (let i=0;i<numPixels;i++){
     const x = Math.floor(Math.random()*w);
@@ -157,30 +155,44 @@ function drawImage(ratio = 0) {
   }
   ctx.putImageData(imageData,0,0);
 
-  // CSS : contraste, saturation et psychédélique
-  const contrast = 1 + ratio*5; 
-  const saturate = 1 + ratio*5; 
-  const hue = ratio*360; 
+  // fractures visuelles supplémentaires
+  const fractureCount = Math.floor(ratio*50);
+  for (let i=0; i<fractureCount; i++) {
+    const x1 = Math.floor(Math.random()*w);
+    const y1 = Math.floor(Math.random()*h);
+    const x2 = x1 + Math.floor(Math.random()*100*ratio);
+    const y2 = y1 + Math.floor(Math.random()*100*ratio);
+    ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+    ctx.lineWidth = 1 + ratio*3;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+  }
+
+  // contraste, saturation et hue rotation extrêmes
+  const contrast = 1 + ratio*5;
+  const saturate = 1 + ratio*5;
+  const hue = ratio*360;
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 }
 
-// événement clic
+// clic : progression image + audio
 document.body.addEventListener("click", () => {
   if(clickCount >= maxClicks) return;
   clickCount++;
   const ratio = clickCount/maxClicks;
 
-  // redraw image avec corruption selon ratio
   drawImage(ratio);
 
-  // audio distorsion et accélération
+  // audio distorsion et stress progressif
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample = '4x';
   filter.type = 'allpass';
   filter.frequency.value = 500 + Math.random()*ratio*2000;
 
-  // playback rate augmente progressivement pour effet stressant
-  audioElement.playbackRate = 1 + ratio*2 + (Math.random()*0.1); // va jusqu'à 3x
+  // playback rate progressif mais doux pour stress
+  audioElement.playbackRate = 1 + ratio * 0.8 + (Math.random()*0.03); // max ~1.8
 });
 </script>
 
