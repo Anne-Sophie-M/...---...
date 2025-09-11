@@ -4,234 +4,192 @@
 <meta charset="UTF-8">
 <title>Chaos Media</title>
 <style>
-html,body {
-  margin:0; padding:0; width:100%; height:100%;
-  overflow:hidden; background:black;
-}
-canvas {
-  position:fixed; top:0; left:0;
-  width:100%; height:100%;
-  object-fit:cover; z-index:-1;
-}
-#startButton {
-  position:fixed; top:0; left:0;
-  width:100%; height:100%;
-  background:transparent; border:none;
-  cursor:pointer; z-index:10;
-}
-#finalText {
-  position:fixed; top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  font-size:6vw; 
-  color:white;
-  font-family:"Courier New", monospace;
-  text-align:center; 
-  pointer-events:none;
-  display:none;
-  z-index:20;
-}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:black;}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-1;}
+#startButton{position:fixed;top:0;left:0;width:100%;height:100%;background:transparent;border:none;cursor:pointer;z-index:10;}
+#finalText{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:6vw;color:white;font-family:"Courier New",monospace;text-align:center;pointer-events:none;display:none;z-index:20;}
 </style>
 </head>
 <body>
-
 <canvas id="canvas"></canvas>
 <div id="finalText">innocence</div>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
 
 <script>
-// --- Canvas setup ---
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-// --- Media list ---
-const medias = [
-  "images/img1.jpg",
-  
-  "videos/vid1.mp4",
+// --- Média aléatoire ---
+const medias=["images/img1.jpg","videos/vid1.mp4",];
+const choice=medias[Math.floor(Math.random()*medias.length)];
+const isVideo=choice.endsWith(".mp4")||choice.endsWith(".webm");
 
-];
-const choice = medias[Math.floor(Math.random()*medias.length)];
-const isVideo = choice.endsWith(".mp4") || choice.endsWith(".webm");
-
-let img=null, video=null;
+let img=null,video=null;
 if(isVideo){
-  video = document.createElement('video');
-  video.src = choice;
-  video.autoplay = true;
-  video.loop = true;
-  video.muted = true;
-  video.playsInline = true;
-  video.style.display="none";
-  document.body.appendChild(video);
-} else {
-  img = new Image();
-  img.src = choice;
-  img.crossOrigin = 'anonymous';
+    video=document.createElement('video');
+    video.src=choice;
+    video.loop=true;
+    video.muted=true;
+    video.playsInline=true;
+    video.autoplay=true;
+    video.style.display="none";
+    document.body.appendChild(video);
+}else{
+    img=new Image();
+    img.src=choice;
+    img.crossOrigin='anonymous';
 }
 
-// --- Audio setup ---
-const audios = ["audio/audio1.mp3",];
-const audioElement = document.getElementById('audio');
-audioElement.src = audios[Math.floor(Math.random()*audios.length)];
+// --- Audio ---
+const audios=["audio/audio1.mp3",];
+const audioElement=document.getElementById('audio');
+audioElement.src=audios[Math.floor(Math.random()*audios.length)];
 
-const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-const source = audioCtx.createMediaElementSource(audioElement);
-const distortion = audioCtx.createWaveShaper();
-const filter = audioCtx.createBiquadFilter();
-const gainNode = audioCtx.createGain();
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+const source=audioCtx.createMediaElementSource(audioElement);
+const distortion=audioCtx.createWaveShaper();
+const filter=audioCtx.createBiquadFilter();
+const gainNode=audioCtx.createGain();
 source.connect(distortion);
 distortion.connect(filter);
 filter.connect(gainNode);
 gainNode.connect(audioCtx.destination);
-gainNode.gain.value = 1;
+gainNode.gain.value=1;
 
 function makeDistortionCurve(amount){
-  const k = amount;
-  const n = 44100;
-  const curve = new Float32Array(n);
-  const deg = Math.PI/180;
-  for(let i=0;i<n;i++){
-    const x = i*2/n-1;
-    curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
-  }
-  return curve;
+    const k=amount;
+    const n=44100;
+    const curve=new Float32Array(n);
+    const deg=Math.PI/180;
+    for(let i=0;i<n;i++){
+        const x=i*2/n-1;
+        curve[i]=((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
+    }
+    return curve;
 }
 
 // --- Interaction ---
-let clickCount=0, maxClicks=47, ratio=0;
-let finalMode=false, scratchPhase=false, scratchStart=null;
+let clickCount=0,maxClicks=47,ratio=0;
+let finalMode=false,scratchPhase=false,scratchStart=null;
 document.body.addEventListener('click',()=>{
-  if(clickCount<maxClicks) clickCount++;
-  ratio = clickCount/maxClicks;
-  if(clickCount===maxClicks) startScratchPhase();
+    if(clickCount<maxClicks) clickCount++;
+    ratio=clickCount/maxClicks;
+    if(clickCount===maxClicks) startScratchPhase();
 });
 
-// Start button
+// --- Start button ---
 document.getElementById('startButton').addEventListener('click',()=>{
-  audioCtx.resume().then(()=>{ audioElement.play(); });
-  document.getElementById('startButton').style.display='none';
+    audioCtx.resume().then(()=>{audioElement.play();if(isVideo) video.play();});
+    document.getElementById('startButton').style.display='none';
 });
 
 // --- Scratch phase ---
 function startScratchPhase(){
-  finalMode = true;
-  scratchPhase = true;
-  scratchStart = Date.now();
-  audioElement.pause();
-  audioElement.src = "audio/final_scream.mp3";
-  audioElement.loop = true;
-  audioElement.play();
-  document.getElementById('finalText').style.display = 'block';
-  distortion.curve = makeDistortionCurve(1500);
+    finalMode=true;
+    scratchPhase=true;
+    scratchStart=Date.now();
+    audioElement.pause();
+    audioElement.src="audio/final_scream.mp3";
+    audioElement.loop=true;
+    audioElement.play();
+    document.getElementById('finalText').style.display='block';
+    distortion.curve=makeDistortionCurve(1500);
 
-  // 9 sec timer -> crash final
-  setTimeout(()=>{ 
-    scratchPhase = false; 
-    crashFinal(); 
-  }, 9000);
+    // 9 sec timer -> crash final
+    setTimeout(()=>{scratchPhase=false;crashFinal();},9000);
 }
 
 // --- Crash final ---
 function crashFinal(){
-  audioElement.pause();
-  audioElement.src = "audio/end.mp3";
-  audioElement.loop = false;
-  audioElement.play();
+    audioElement.pause();
+    audioElement.src="audio/end.mp3";
+    audioElement.loop=false;
+    audioElement.play();
 }
 
-// --- Draw scratches ---
+// --- Rayures noires avec tremblement ---
 function drawScratches(){
-  const text = document.getElementById('finalText');
-  const rect = text.getBoundingClientRect();
-  ctx.save();
-  ctx.translate(rect.left, rect.top);
-  ctx.strokeStyle = "rgba(0,0,0,1)"; // noir
-  ctx.lineWidth = Math.random()*6 + 2;
-  for(let i=0;i<5;i++){
-    let x1 = Math.random()*rect.width;
-    let y1 = Math.random()*rect.height;
-    let x2 = x1 + (Math.random()*100-50);
-    let y2 = y1 + (Math.random()*40-20);
-    ctx.beginPath();
-    ctx.moveTo(x1,y1);
-    ctx.lineTo(x2,y2);
-    ctx.stroke();
-  }
-  ctx.restore();
+    const text=document.getElementById('finalText');
+    const rect=text.getBoundingClientRect();
+    const shakeX=(Math.random()-0.5)*5;
+    const shakeY=(Math.random()-0.5)*5;
+    ctx.save();
+    ctx.translate(rect.left+shakeX,rect.top+shakeY);
+    ctx.strokeStyle="rgba(0,0,0,1)";
+    ctx.lineWidth=Math.random()*6+2;
+    for(let i=0;i<5;i++){
+        const x1=Math.random()*rect.width;
+        const y1=Math.random()*rect.height;
+        const x2=x1+Math.random()*100-50;
+        const y2=y1+Math.random()*40-20;
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+    }
+    ctx.restore();
 }
 
 // --- Draw loop ---
 function draw(){
-  requestAnimationFrame(draw);
-  const w=canvas.width, h=canvas.height;
+    requestAnimationFrame(draw);
+    const w=canvas.width,h=canvas.height;
 
-  // --- Draw media ---
-  let sourceEl = isVideo ? video : img;
-  if(!sourceEl) return;
-  if(isVideo && video.readyState < 2) return;
-  if(!isVideo && !img.complete) return;
+    // --- Affichage média ---
+    let sourceEl=isVideo?video:img;
+    if(!sourceEl) return;
+    if(isVideo && video.readyState<2) return;
+    if(!isVideo && !img.complete) return;
 
-  const scale = 1 - 0.8*ratio;
-  const sw = Math.max(1, Math.floor(sourceEl.videoWidth||sourceEl.width)*scale);
-  const sh = Math.max(1, Math.floor(sourceEl.videoHeight||sourceEl.height)*scale);
-  const temp = document.createElement('canvas');
-  temp.width = sw; temp.height = sh;
-  const tctx = temp.getContext('2d');
-  tctx.drawImage(sourceEl,0,0,sw,sh);
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0,0,w,h);
-  ctx.drawImage(temp,0,0,sw,sh,0,0,w,h);
+    ctx.clearRect(0,0,w,h);
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(sourceEl,0,0,w,h);
 
-  // --- Glitch blocs ---
-  const blockCount = Math.floor(ratio*200);
-  for(let i=0;i<blockCount;i++){
-    const bx=Math.random()*w, by=Math.random()*h;
-    const bw=Math.random()*30+5, bh=Math.random()*30+5;
-    const tempData = ctx.getImageData(bx,by,bw,bh);
-    const dx = (Math.random()-0.5)*150*ratio;
-    const dy = (Math.random()-0.5)*150*ratio;
-    ctx.putImageData(tempData,bx+dx,by+dy);
-  }
+    // --- Glitch blocs ---
+    const blockCount=Math.floor(ratio*200);
+    for(let i=0;i<blockCount;i++){
+        const bx=Math.random()*w,by=Math.random()*h;
+        const bw=Math.random()*30+5,bh=Math.random()*30+5;
+        const tempData=ctx.getImageData(bx,by,bw,bh);
+        const dx=(Math.random()-0.5)*150*ratio;
+        const dy=(Math.random()-0.5)*150*ratio;
+        ctx.putImageData(tempData,bx+dx,by+dy);
+    }
 
-  // --- Fractures ---
-  const fracCount = Math.floor(ratio*50);
-  const time = Date.now()*0.002;
-  for(let i=0;i<fracCount;i++){
-    const x1=Math.random()*w, y1=Math.random()*h;
-    const offsetX = Math.sin(time+i)*50*ratio;
-    const offsetY = Math.cos(time+i)*50*ratio;
-    const x2 = x1+offsetX, y2 = y1+offsetY;
-    ctx.strokeStyle = `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.5)`;
-    ctx.lineWidth = 1+ratio*2;
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-  }
+    // --- Fractures ---
+    const fracCount=Math.floor(ratio*50);
+    const time=Date.now()*0.002;
+    for(let i=0;i<fracCount;i++){
+        const x1=Math.random()*w,y1=Math.random()*h;
+        const offsetX=Math.sin(time+i)*50*ratio;
+        const offsetY=Math.cos(time+i)*50*ratio;
+        const x2=x1+offsetX,y2=y1+offsetY;
+        ctx.strokeStyle=`rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.5)`;
+        ctx.lineWidth=1+ratio*2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
 
-  // --- CSS Filters ---
-  const contrast = 1+ratio*5;
-  const saturate = 1+ratio*5;
-  const hue = ratio*360;
-  document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
+    // --- Filtres CSS ---
+    document.body.style.filter=`contrast(${1+ratio*5}) saturate(${1+ratio*5}) hue-rotate(${ratio*360}deg)`;
 
-  // --- Audio progression ---
-  distortion.curve = makeDistortionCurve(ratio*700);
-  distortion.oversample='4x';
-  filter.type='allpass';
-  filter.frequency.value = 500+Math.random()*ratio*2000;
-  audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
+    // --- Audio progression ---
+    distortion.curve=makeDistortionCurve(ratio*700);
+    distortion.oversample='4x';
+    filter.type='allpass';
+    filter.frequency.value=500+Math.random()*ratio*2000;
+    audioElement.playbackRate=1+ratio*0.8+Math.random()*0.02;
 
-  // --- Scratch effect ---
-  if(scratchPhase){
-    drawScratches();
-  }
+    // --- Rayures ---
+    if(scratchPhase) drawScratches();
 
-  // --- Crash final red overlay ---
-  if(!scratchPhase && finalMode && scratchStart){
-    ctx.fillStyle = "rgba(255,0,0,0.7)";
-    ctx.fillRect(0,0,w,h);
-  }
+    // --- Crash final rouge ---
+    if(!scratchPhase && finalMode){
+        ctx.fillStyle="rgba(255,0,0,0.7)";
+        ctx.fillRect(0,0,w,h);
+    }
 }
 
 draw();
