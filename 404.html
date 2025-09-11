@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Random Image & Audio Corruption</title>
+<title>Image & Audio Corruption Extreme</title>
 <style>
   html, body {
     margin: 0;
@@ -45,12 +45,13 @@
 // ---- Images & Audio ----
 const images = [
   "images/image1.jpg",
+  
   "https://picsum.photos/1920/1080?random=1",
   "https://picsum.photos/1920/1080?random=2"
 ];
 const audios = [
   "audio/audio1.mp3",
- 
+  
 ];
 
 // ---- Canvas Setup ----
@@ -72,17 +73,22 @@ const audioElement = document.getElementById("audio");
 const randomAudio = audios[Math.floor(Math.random()*audios.length)];
 audioElement.src = randomAudio;
 
+// Audio Context pour distorsion
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const source = audioCtx.createMediaElementSource(audioElement);
-const gainNode = audioCtx.createGain();
 const distortion = audioCtx.createWaveShaper();
 const filter = audioCtx.createBiquadFilter();
+const gainNode = audioCtx.createGain();
 
 source.connect(distortion);
 distortion.connect(filter);
 filter.connect(gainNode);
 gainNode.connect(audioCtx.destination);
 
+// Volume constant
+gainNode.gain.value = 1;
+
+// Simple fonction pour distorsion
 function makeDistortionCurve(amount) {
   const k = amount;
   const n_samples = 44100;
@@ -103,41 +109,59 @@ startButton.addEventListener("click", () => {
   startButton.style.display = "none";
 });
 
-// ---- Corruption Logic ----
-let deterioration = 0;
-document.body.addEventListener("click", () => {
-  deterioration += 0.1;
+// ---- Détérioration progressive ----
+let clickCount = 0;
+const maxClicks = 25;
 
-  // --- Image corruption ---
+document.body.addEventListener("click", () => {
+  if(clickCount >= maxClicks) return;
+  clickCount++;
+
+  const ratio = clickCount / maxClicks; // 0 → 1
+
+  // --- Image : glitch progressif ---
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  for (let i=0; i<5000 + deterioration*5000; i++) {
+
+  // Ajouter du bruit + pixels décalés
+  const numPixels = Math.floor(5000 + ratio*50000); 
+  for (let i=0; i<numPixels; i++) {
     const x = Math.floor(Math.random()*canvas.width);
     const y = Math.floor(Math.random()*canvas.height);
     const idx = (y*canvas.width+x)*4;
-    // Bruit aléatoire
     imageData.data[idx] = Math.random()*255;
     imageData.data[idx+1] = Math.random()*255;
     imageData.data[idx+2] = Math.random()*255;
   }
-  ctx.putImageData(imageData,0,0);
 
-  // Filtre CSS extrême pour glitch
-  const blur = deterioration*10;
-  const gray = Math.min(deterioration,1);
-  const contrast = Math.max(1 - deterioration*0.5,0.2);
-  const brightness = Math.max(1 - deterioration*0.4,0.2);
+  // Décalage de blocs aléatoires
+  const blockCount = Math.floor(ratio*100);
+  for (let i=0; i<blockCount; i++) {
+    const bx = Math.floor(Math.random()*canvas.width);
+    const by = Math.floor(Math.random()*canvas.height);
+    const bw = Math.floor(Math.random()*20 + 5);
+    const bh = Math.floor(Math.random()*20 + 5);
+    const temp = ctx.getImageData(bx, by, bw, bh);
+    const dx = Math.floor((Math.random()-0.5)*50*ratio);
+    const dy = Math.floor((Math.random()-0.5)*50*ratio);
+    ctx.putImageData(temp, bx+dx, by+dy);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  // CSS glitch supplémentaire
+  const blur = ratio*15;
+  const gray = ratio;
+  const contrast = Math.max(1 - ratio*0.8,0.2);
+  const brightness = Math.max(1 - ratio*0.7,0.1);
   document.body.style.filter = `blur(${blur}px) grayscale(${gray}) contrast(${contrast}) brightness(${brightness})`;
 
-  // --- Audio corruption ---
-  distortion.curve = makeDistortionCurve(deterioration*400); // distorsion forte
+  // --- Audio : distorsion progressive ---
+  distortion.curve = makeDistortionCurve(ratio*500);
   distortion.oversample = '4x';
-
   filter.type = 'allpass';
-  filter.frequency.value = 500 + Math.random()*deterioration*500; // fréquence instable
-
-  audioElement.playbackRate = 1 - deterioration*0.1 + (Math.random()*0.05); // pitch instable
-  gainNode.gain.value = Math.max(0.1, 1 - deterioration*0.6); // baisse de volume progressive
+  filter.frequency.value = 500 + Math.random()*ratio*1000; 
+  audioElement.playbackRate = 1 - ratio*0.15 + (Math.random()*0.05); // pitch instable
 });
 </script>
 
