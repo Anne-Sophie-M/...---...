@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ultra Chaotic Glitch & Audio</title>
+<title>Ultimate Living Glitch & Stress Audio</title>
 <style>
   html, body {
     margin: 0;
@@ -44,15 +44,13 @@
 // ---- Images & Audio ----
 const images = [
   "images/image1.jpg",
-  "images/image2.jpg",
-  "images/image3.jpg",
+  
   "https://picsum.photos/1920/1080?random=1",
   "https://picsum.photos/1920/1080?random=2"
 ];
 const audios = [
   "audio/audio1.mp3",
-  "audio/audio2.mp3",
-  "audio/audio3.mp3"
+ 
 ];
 
 // ---- Canvas Setup ----
@@ -119,7 +117,7 @@ document.body.addEventListener("click", () => {
   ratio = clickCount/maxClicks;
 });
 
-// ---- Animation Loop ----
+// ---- Animation Loop avec fractures vibrantes ----
 function animate() {
   requestAnimationFrame(animate);
   if(!img.complete) return;
@@ -166,13 +164,16 @@ function animate() {
   }
   ctx.putImageData(imageData,0,0);
 
-  // fractures dynamiques
-  const fractureCount = Math.floor(ratio*50);
+  // fractures vibrantes
+  const fractureCount = Math.floor(ratio*70);
+  const time = Date.now()*0.002; // oscillation temps
   for(let i=0;i<fractureCount;i++){
     const x1 = Math.floor(Math.random()*w);
     const y1 = Math.floor(Math.random()*h);
-    const x2 = x1 + Math.floor(Math.random()*100*ratio*(Math.random()-0.5));
-    const y2 = y1 + Math.floor(Math.random()*100*ratio*(Math.random()-0.5));
+    const offsetX = Math.sin(time + i)*50*ratio;
+    const offsetY = Math.cos(time + i)*50*ratio;
+    const x2 = x1 + Math.floor(offsetX);
+    const y2 = y1 + Math.floor(offsetY);
     ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
     ctx.lineWidth = 1 + ratio*3;
     ctx.beginPath();
