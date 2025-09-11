@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ultimate Glitch & Audio Madness</title>
+<title>Ultimate Glitch & Stress Audio</title>
 <style>
   html, body {
     margin: 0;
@@ -45,13 +45,15 @@
 // ---- Images & Audio ----
 const images = [
   "images/image1.jpg",
-  
+  "images/image2.jpg",
+  "images/image3.jpg",
   "https://picsum.photos/1920/1080?random=1",
   "https://picsum.photos/1920/1080?random=2"
 ];
 const audios = [
   "audio/audio1.mp3",
-  
+  "audio/audio2.mp3",
+  "audio/audio3.mp3"
 ];
 
 // ---- Canvas Setup ----
@@ -121,14 +123,12 @@ function drawImage(ratio = 0) {
   const sw = Math.max(1, Math.floor(w * pixelFactor));
   const sh = Math.max(1, Math.floor(h * pixelFactor));
 
-  // créer un canvas temporaire pour pixeliser
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = sw;
   tempCanvas.height = sh;
   const tCtx = tempCanvas.getContext('2d');
   tCtx.drawImage(img, 0, 0, sw, sh);
 
-  // ré-étirer sur le canvas principal
   ctx.drawImage(tempCanvas, 0, 0, w, h);
 
   // ajouter glitch blocs
@@ -157,10 +157,10 @@ function drawImage(ratio = 0) {
   }
   ctx.putImageData(imageData,0,0);
 
-  // CSS : contraste et saturation extrêmes, virage psychédélique
-  const contrast = 1 + ratio*5; // jusqu'à 6x
-  const saturate = 1 + ratio*5; // jusqu'à 6x
-  const hue = ratio*360; // hue rotation pour psyché extrême
+  // CSS : contraste, saturation et psychédélique
+  const contrast = 1 + ratio*5; 
+  const saturate = 1 + ratio*5; 
+  const hue = ratio*360; 
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 }
 
@@ -173,12 +173,14 @@ document.body.addEventListener("click", () => {
   // redraw image avec corruption selon ratio
   drawImage(ratio);
 
-  // audio distorsion
+  // audio distorsion et accélération
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample = '4x';
   filter.type = 'allpass';
   filter.frequency.value = 500 + Math.random()*ratio*2000;
-  audioElement.playbackRate = 1 - ratio*0.2 + (Math.random()*0.05);
+
+  // playback rate augmente progressivement pour effet stressant
+  audioElement.playbackRate = 1 + ratio*2 + (Math.random()*0.1); // va jusqu'à 3x
 });
 </script>
 
