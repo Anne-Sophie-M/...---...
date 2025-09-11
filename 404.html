@@ -1,17 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Audio-Reactive Glitch Fullscreen</title>
+<title>Glitch Finale</title>
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
+#finalText {
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  font-size:5vw; color:white; font-family:sans-serif;
+  text-align:center; pointer-events:none; display:none;
+}
 </style>
 </head>
 <body>
 
 <canvas id="canvas"></canvas>
+<div id="finalText">innocence brisée</div>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
 
@@ -21,22 +28,19 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Images & audio
 const images = ["https://picsum.photos/1920/1080?random=1"];
-const audios = ["audio/audio1.mp3"]; // ajoute tes fichiers
+const audios = ["audio/audio1.mp3"]; // ajoute tes fichiers normaux
+const finalAudioSrc = "audio/final_scream.mp3"; // très aigu et désagréable
 
-// Image setup
 let img = new Image();
-img.crossOrigin = 'anonymous';
-img.src = images[Math.floor(Math.random()*images.length)];
+img.crossOrigin='anonymous';
+img.src = images[0];
 
-// Temp canvas pour pixelisation
 const temp = document.createElement('canvas');
 const tctx = temp.getContext('2d');
 
-// Audio setup
 const audioElement = document.getElementById('audio');
-audioElement.src = audios[Math.floor(Math.random()*audios.length)];
+audioElement.src = audios[0];
 const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 const source = audioCtx.createMediaElementSource(audioElement);
 const distortion = audioCtx.createWaveShaper();
@@ -56,7 +60,7 @@ function makeDistortionCurve(amount){
   const k = amount;
   const n = 44100;
   const curve = new Float32Array(n);
-  const deg = Math.PI/180;
+  const deg=Math.PI/180;
   for(let i=0;i<n;i++){
     const x = i*2/n-1;
     curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
@@ -71,26 +75,45 @@ document.getElementById('startButton').addEventListener('click',()=>{
   document.getElementById('startButton').style.display='none';
 });
 
-// Clicks & ratio
-let clickCount = 0, maxClicks = 47, ratio = 0;
-document.body.addEventListener('click',()=>{if(clickCount<maxClicks) clickCount++; ratio = clickCount/maxClicks;});
+// Clicks
+let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
+document.body.addEventListener('click',()=>{
+  if(clickCount<maxClicks) clickCount++;
+  ratio = clickCount/maxClicks;
+  if(clickCount===maxClicks) activateFinalMode();
+});
 
-// Animation
-img.onload = ()=>{
-  temp.width = img.width;
-  temp.height = img.height;
-  requestAnimationFrame(draw);
+function activateFinalMode(){
+  finalMode = true;
+  audioElement.pause();
+  audioElement.src = finalAudioSrc;
+  audioElement.loop = true;
+  audioElement.play();
+  distortion.curve = makeDistortionCurve(1500);
+  document.getElementById('finalText').style.display = 'block';
 }
+
+img.onload = ()=>{ temp.width=img.width; temp.height=img.height; requestAnimationFrame(draw); }
 
 function draw(){
   requestAnimationFrame(draw);
-  if(!img.complete) return;
+  const w=canvas.width;
+  const h=canvas.height;
 
-  analyser.getByteFrequencyData(dataArray);
-  const volume = dataArray.reduce((a,b)=>a+b,0)/dataArray.length/255; // 0->1
-
-  const w = canvas.width;
-  const h = canvas.height;
+  if(finalMode){
+    // Écran rouge glitché
+    ctx.clearRect(0,0,w,h);
+    const blockCount = 500;
+    for(let i=0;i<blockCount;i++){
+      const x=Math.floor(Math.random()*w);
+      const y=Math.floor(Math.random()*h);
+      const bw=Math.floor(Math.random()*50+10);
+      const bh=Math.floor(Math.random()*50+10);
+      ctx.fillStyle = `rgba(255,0,0,${Math.random()*0.6+0.2})`;
+      ctx.fillRect(x,y,bw,bh);
+    }
+    return;
+  }
 
   // Pixelisation rapide et full screen
   const scale = 1 - 0.8*ratio;
@@ -107,22 +130,22 @@ function draw(){
   for(let i=0;i<blockCount;i++){
     const bx = Math.floor(Math.random()*w);
     const by = Math.floor(Math.random()*h);
-    const bw = Math.floor(Math.random()*30 + 5);
-    const bh = Math.floor(Math.random()*30 + 5);
+    const bw = Math.floor(Math.random()*30+5);
+    const bh = Math.floor(Math.random()*30+5);
     const tempData = ctx.getImageData(bx,by,bw,bh);
-    const dx = Math.floor((Math.random()-0.5)*150*ratio*volume);
-    const dy = Math.floor((Math.random()-0.5)*150*ratio*volume);
+    const dx = Math.floor((Math.random()-0.5)*150*ratio);
+    const dy = Math.floor((Math.random()-0.5)*150*ratio);
     ctx.putImageData(tempData,bx+dx,by+dy);
   }
 
-  // Fractures audio-réactives
+  // Fractures vibrantes
   const fracCount = Math.floor(ratio*50);
   const time = Date.now()*0.002;
   for(let i=0;i<fracCount;i++){
     const x1 = Math.floor(Math.random()*w);
     const y1 = Math.floor(Math.random()*h);
-    const offsetX = Math.sin(time+i)*50*ratio*volume*2;
-    const offsetY = Math.cos(time+i)*50*ratio*volume*2;
+    const offsetX = Math.sin(time+i)*50*ratio;
+    const offsetY = Math.cos(time+i)*50*ratio;
     const x2 = x1 + Math.floor(offsetX);
     const y2 = y1 + Math.floor(offsetY);
     ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
@@ -139,7 +162,7 @@ function draw(){
   const hue = ratio*360;
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-  // Audio
+  // Audio distorsion + playback rate progressif
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample='4x';
   filter.type='allpass';
