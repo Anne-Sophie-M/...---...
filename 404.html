@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Glitch Audio-Reactive Ultimate</title>
+<title>FullScreen Audio-Reactive Glitch</title>
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
@@ -71,7 +71,7 @@ let clickCount=0, maxClicks=47, ratio=0;
 document.body.addEventListener("click",()=>{if(clickCount<maxClicks) clickCount++; ratio = clickCount/maxClicks;});
 
 // Draw & animate
-img.onload=()=>{ tempCanvas.width=img.width; tempCanvas.height=img.height; requestAnimationFrame(animate); }
+img.onload=()=>{ tempCanvas.width=1; tempCanvas.height=1; requestAnimationFrame(animate); }
 
 function animate(){
   requestAnimationFrame(animate);
@@ -81,14 +81,22 @@ function animate(){
   const volume = dataArray.reduce((a,b)=>a+b,0)/dataArray.length/255; // 0→1
 
   const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
 
-  // Pixelisation
-  const pixelFactor = 1 - 0.8*ratio;
-  const sw=Math.max(1, Math.floor(img.width*pixelFactor));
-  const sh=Math.max(1, Math.floor(img.height*pixelFactor));
-  tCtx.clearRect(0,0,tempCanvas.width,tempCanvas.height);
-  tCtx.drawImage(img,0,0,sw,sh);
-  ctx.drawImage(tempCanvas,0,0,w,h);
+  // Pixelisation full screen
+  const pixelSize = 1 + Math.floor(30 * ratio);
+  ctx.imageSmoothingEnabled = false;
+  for(let y=0; y<h; y+=pixelSize){
+    for(let x=0; x<w; x+=pixelSize){
+      const sx = Math.floor(x / w * img.width);
+      const sy = Math.floor(y / h * img.height);
+      tCtx.clearRect(0,0,1,1);
+      tCtx.drawImage(img,sx,sy,1,1,0,0,1,1);
+      const color = tCtx.getImageData(0,0,1,1).data;
+      ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},1)`;
+      ctx.fillRect(x,y,pixelSize,pixelSize);
+    }
+  }
 
   // Glitch dynamique
   const blockCount = Math.floor(ratio*250);
