@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>RUST9</title>
   <link rel="stylesheet" href="style.css">
+
   <script>
     const phrases = [
       "je me souviens.",
@@ -36,6 +37,26 @@
       unstable.innerHTML = glitchText(phrase);
     }
   </script>
+
+  <!-- CSS spécifique au hotspot -->
+  <style>
+    body {
+      position: relative; /* nécessaire pour positionner le hotspot */
+      background: url("ton-dessin.png") no-repeat center center;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .hotspot {
+      position: absolute;
+      cursor: pointer;
+      background: rgba(255,0,0,0); /* invisible mais cliquable */
+    }
+  </style>
 </head>
 <body>
   <div class="center">
@@ -47,5 +68,41 @@
       <!-- La page "pensees.html" est accessible via URL mais invisible ici -->
     </nav>
   </div>
+
+  <!-- Hotspot invisible pour la page cachée -->
+  <a href="page-cachee.html" class="hotspot" id="hotspot"></a>
+
+  <!-- Script pour positionner le hotspot -->
+  <script>
+    const imgWidth = 1920;
+    const imgHeight = 1080;
+    const hotspotBox = { x: 1600, y: 430, w: 20, h: 20 };
+    const hotspot = document.getElementById("hotspot");
+
+    function updateHotspot() {
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const winRatio = winW / winH;
+      const imgRatio = imgWidth / imgHeight;
+
+      let scale, offsetX = 0, offsetY = 0;
+
+      if (winRatio > imgRatio) {
+        scale = winW / imgWidth;
+        offsetY = (winH - imgHeight * scale) / 2;
+      } else {
+        scale = winH / imgHeight;
+        offsetX = (winW - imgWidth * scale) / 2;
+      }
+
+      hotspot.style.left = (hotspotBox.x * scale + offsetX) + "px";
+      hotspot.style.top = (hotspotBox.y * scale + offsetY) + "px";
+      hotspot.style.width = (hotspotBox.w * scale) + "px";
+      hotspot.style.height = (hotspotBox.h * scale) + "px";
+    }
+
+    window.addEventListener("resize", updateHotspot);
+    window.addEventListener("load", updateHotspot);
+  </script>
 </body>
 </html>
