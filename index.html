@@ -38,18 +38,27 @@
     }
   </script>
 
-  <!-- CSS minimal pour le hotspot -->
+  <!-- CSS minimal pour le hotspot et centrage -->
   <style>
-    body {
-      position: relative; /* nécessaire pour positionner le hotspot sans toucher au background de style.css */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center; /* centre verticalement */
+      align-items: center;     /* centre horizontalement */
+      background: url("images/background.jpg") no-repeat center center;
+      background-size: cover;
+      color: white;
     }
 
     .hotspot {
       position: absolute;
       cursor: pointer;
-      background: rgba(255,0,0,0.3); /* couleur semi-transparente pour voir le hotspot */
-  border: 1px solid red; /* facultatif pour bien visualiser */
-}
+      background: rgba(255,0,0,0); /* invisible mais cliquable */
+    }
   </style>
 </head>
 <body>
@@ -76,23 +85,17 @@
     function updateHotspot() {
       const winW = window.innerWidth;
       const winH = window.innerHeight;
-      const winRatio = winW / winH;
-      const imgRatio = imgWidth / imgHeight;
 
-      let scale, offsetX = 0, offsetY = 0;
+      // Calculer position et taille du hotspot proportionnellement à la fenêtre
+      const leftPerc = hotspotBox.x / imgWidth;
+      const topPerc = hotspotBox.y / imgHeight;
+      const widthPerc = hotspotBox.w / imgWidth;
+      const heightPerc = hotspotBox.h / imgHeight;
 
-      if (winRatio > imgRatio) {
-        scale = winW / imgWidth;
-        offsetY = (winH - imgHeight * scale) / 2;
-      } else {
-        scale = winH / imgHeight;
-        offsetX = (winW - imgWidth * scale) / 2;
-      }
-
-      hotspot.style.left = (hotspotBox.x * scale + offsetX) + "px";
-      hotspot.style.top = (hotspotBox.y * scale + offsetY) + "px";
-      hotspot.style.width = (hotspotBox.w * scale) + "px";
-      hotspot.style.height = (hotspotBox.h * scale) + "px";
+      hotspot.style.left = (leftPerc * winW) + "px";
+      hotspot.style.top = (topPerc * winH) + "px";
+      hotspot.style.width = (widthPerc * winW) + "px";
+      hotspot.style.height = (heightPerc * winH) + "px";
     }
 
     window.addEventListener("resize", updateHotspot);
