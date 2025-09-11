@@ -5,6 +5,47 @@
   <title>RUST9</title>
   <link rel="stylesheet" href="style.css">
 
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: monospace;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      background-color: black; /* si le fond derrière l'image est visible */
+    }
+
+    .image-container {
+      position: relative;
+      width: 100%;
+      max-width: 1920px; /* largeur originale de l'image */
+    }
+
+    #bg-image {
+      width: 100%;
+      height: auto; /* garde les proportions */
+      display: block;
+    }
+
+    .hotspot {
+      position: absolute;
+      cursor: pointer;
+      background: rgba(255,0,0,0); /* invisible mais cliquable */
+    }
+
+    .center {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      margin-top: 20%; /* si tu veux conserver ton style */
+    }
+  </style>
+
   <script>
     const phrases = [
       "je me souviens.",
@@ -37,65 +78,35 @@
       unstable.innerHTML = glitchText(phrase);
     }
   </script>
-
-  <!-- CSS minimal pour le hotspot et centrage -->
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: monospace;
-      display: flex;
-      flex-direction: column;
-      justify-content: center; /* centre verticalement */
-      align-items: center;     /* centre horizontalement */
-      background: url("images/background.jpg") no-repeat center center;
-      background-size: cover;
-      color: white;
-    }
-
-    .hotspot {
-      position: absolute;
-      cursor: pointer;
-      background: rgba(255,0,0,0); /* invisible mais cliquable */
-    }
-  </style>
 </head>
 <body>
-  <div class="center">
-    <h1>MiroirFêlé</h1>
-    <p id="unstable"></p>
-    <nav>
-      <a href="voices.html">voices</a> | 
-      <a href="mirror.html">mirror</a>
-      <!-- La page "pensees.html" est accessible via URL mais invisible ici -->
-    </nav>
+  <div class="image-container">
+    <img src="images/background.jpg" alt="dessin" id="bg-image">
+    <a href="404.html" class="hotspot" id="hotspot"></a>
+    <div class="center">
+      <h1>MiroirFêlé</h1>
+      <p id="unstable"></p>
+      <nav>
+        <a href="voices.html">voices</a> | 
+        <a href="mirror.html">mirror</a>
+      </nav>
+    </div>
   </div>
 
-  <!-- Hotspot invisible menant à 404.html -->
-  <a href="404.html" class="hotspot" id="hotspot"></a>
-
-  <!-- Script pour positionner le hotspot -->
   <script>
-    const imgWidth = 1920;
-    const imgHeight = 1080;
     const hotspotBox = { x: 1600, y: 430, w: 20, h: 20 };
+    const bgImage = document.getElementById("bg-image");
     const hotspot = document.getElementById("hotspot");
 
     function updateHotspot() {
-      const winW = window.innerWidth;
-      const winH = window.innerHeight;
+      const rect = bgImage.getBoundingClientRect();
+      const scaleX = rect.width / 1920;
+      const scaleY = rect.height / 1080;
 
-      // Calculer position et taille du hotspot proportionnellement à la fenêtre
-      const leftPerc = hotspotBox.x / imgWidth;
-      const topPerc = hotspotBox.y / imgHeight;
-      const widthPerc = hotspotBox.w / imgWidth;
-      const heightPerc = hotspotBox.h / imgHeight;
-
-      hotspot.style.left = (leftPerc * winW) + "px";
-      hotspot.style.top = (topPerc * winH) + "px";
-      hotspot.style.width = (widthPerc * winW) + "px";
-      hotspot.style.height = (heightPerc * winH) + "px";
+      hotspot.style.left = (hotspotBox.x * scaleX + rect.left) + "px";
+      hotspot.style.top = (hotspotBox.y * scaleY + rect.top) + "px";
+      hotspot.style.width = (hotspotBox.w * scaleX) + "px";
+      hotspot.style.height = (hotspotBox.h * scaleY) + "px";
     }
 
     window.addEventListener("resize", updateHotspot);
