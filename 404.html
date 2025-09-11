@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Image & Audio Extreme Glitch</title>
+<title>Extreme Glitch & Audio</title>
 <style>
   html, body {
     margin: 0;
@@ -45,7 +45,7 @@
 // ---- Images & Audio ----
 const images = [
   "images/image1.jpg",
- 
+  
   "https://picsum.photos/1920/1080?random=1",
   "https://picsum.photos/1920/1080?random=2"
 ];
@@ -62,12 +62,6 @@ const randomImage = images[Math.floor(Math.random()*images.length)];
 img.crossOrigin = "anonymous";
 img.src = randomImage;
 
-img.onload = () => {
-  canvas.width = img.width;
-  canvas.height = img.height;
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-};
-
 // ---- Audio Setup Web Audio API ----
 const audioElement = document.getElementById("audio");
 const randomAudio = audios[Math.floor(Math.random()*audios.length)];
@@ -83,11 +77,9 @@ source.connect(distortion);
 distortion.connect(filter);
 filter.connect(gainNode);
 gainNode.connect(audioCtx.destination);
+gainNode.gain.value = 1; // volume constant
 
-// volume constant
-gainNode.gain.value = 1;
-
-// distortion helper
+// fonction distorsion
 function makeDistortionCurve(amount) {
   const k = amount;
   const n_samples = 44100;
@@ -112,48 +104,75 @@ startButton.addEventListener("click", () => {
 let clickCount = 0;
 const maxClicks = 25;
 
-document.body.addEventListener("click", () => {
-  if(clickCount >= maxClicks) return;
-  clickCount++;
+// dessiner l'image initiale dès le chargement
+img.onload = () => {
+  canvas.width = img.width;
+  canvas.height = img.height;
+  drawImage(); // image normale initiale
+};
 
-  const ratio = clickCount / maxClicks;
+// fonction pour dessiner l'image avec glitch / pixelisation selon ratio
+function drawImage(ratio = 0) {
+  let w = canvas.width;
+  let h = canvas.height;
 
-  // --- Image glitch ---
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  // pixelisation : réduire taille et ré-agrandir
+  const pixelFactor = 1 - 0.7*ratio; // 1 → normal, 0.3 → très pixelisé
+  const sw = Math.max(1, Math.floor(w * pixelFactor));
+  const sh = Math.max(1, Math.floor(h * pixelFactor));
 
-  // ajouter du bruit proportionnel
-  const numPixels = Math.floor(5000 + ratio*50000);
-  for (let i=0; i<numPixels; i++) {
-    const x = Math.floor(Math.random()*canvas.width);
-    const y = Math.floor(Math.random()*canvas.height);
-    const idx = (y*canvas.width+x)*4;
+  // créer un canvas temporaire pour pixeliser
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = sw;
+  tempCanvas.height = sh;
+  const tCtx = tempCanvas.getContext('2d');
+  tCtx.drawImage(img, 0, 0, sw, sh);
+
+  // ré-étirer sur le canvas principal
+  ctx.drawImage(tempCanvas, 0, 0, w, h);
+
+  // ajouter glitch blocs
+  const blockCount = Math.floor(ratio*150);
+  for (let i=0; i<blockCount; i++) {
+    const bx = Math.floor(Math.random()*w);
+    const by = Math.floor(Math.random()*h);
+    const bw = Math.floor(Math.random()*30 + 5);
+    const bh = Math.floor(Math.random()*30 + 5);
+    const temp = ctx.getImageData(bx, by, bw, bh);
+    const dx = Math.floor((Math.random()-0.5)*100*ratio);
+    const dy = Math.floor((Math.random()-0.5)*100*ratio);
+    ctx.putImageData(temp, bx+dx, by+dy);
+  }
+
+  // ajouter bruit aléatoire
+  const numPixels = Math.floor(5000 + ratio*70000);
+  const imageData = ctx.getImageData(0,0,w,h);
+  for (let i=0;i<numPixels;i++){
+    const x = Math.floor(Math.random()*w);
+    const y = Math.floor(Math.random()*h);
+    const idx = (y*w + x)*4;
     imageData.data[idx] = Math.random()*255;
     imageData.data[idx+1] = Math.random()*255;
     imageData.data[idx+2] = Math.random()*255;
   }
+  ctx.putImageData(imageData,0,0);
 
-  // blocs décalés pour glitch
-  const blockCount = Math.floor(ratio*100);
-  for (let i=0; i<blockCount; i++) {
-    const bx = Math.floor(Math.random()*canvas.width);
-    const by = Math.floor(Math.random()*canvas.height);
-    const bw = Math.floor(Math.random()*20 + 5);
-    const bh = Math.floor(Math.random()*20 + 5);
-    const temp = ctx.getImageData(bx, by, bw, bh);
-    const dx = Math.floor((Math.random()-0.5)*50*ratio);
-    const dy = Math.floor((Math.random()-0.5)*50*ratio);
-    ctx.putImageData(temp, bx+dx, by+dy);
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-
-  // CSS : contraste et saturation
-  const contrast = 1 + ratio*3; // augmente jusqu'à x4
-  const saturate = 1 + ratio*3; // augmente jusqu'à x4
+  // CSS : contraste et saturation extrêmes
+  const contrast = 1 + ratio*4; // jusqu'à 5x
+  const saturate = 1 + ratio*4; // jusqu'à 5x
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate})`;
+}
 
-  // --- Audio ---
+// événement clic
+document.body.addEventListener("click", () => {
+  if(clickCount >= maxClicks) return;
+  clickCount++;
+  const ratio = clickCount/maxClicks;
+
+  // redraw image avec corruption selon ratio
+  drawImage(ratio);
+
+  // audio distorsion
   distortion.curve = makeDistortionCurve(ratio*500);
   distortion.oversample = '4x';
   filter.type = 'allpass';
