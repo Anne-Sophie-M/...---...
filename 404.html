@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Glitch Finale 9 Sets</title>
+<title>Glitch Finale</title>
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
@@ -10,7 +10,7 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 #finalText {
   position:fixed; top:50%; left:50%;
   transform:translate(-50%,-50%);
-  font-size:3vw; color:white; font-family:sans-serif;
+  font-size:5vw; color:white; font-family:sans-serif;
   text-align:center; pointer-events:none; display:none;
   max-width: 80vw;
 }
@@ -24,53 +24,42 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <button id="startButton"></button>
 
 <script>
+// --- Base HTML originel ---
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// --- 9 sets ---
+// --- Choix aléatoire du set ---
 const sets = [
-  { images:["images/set1trans1.jpg","images/set1trans2.jpg","images/set1trans3.jpg","images/set1trans4.jpg","images/set1final.jpg"], audio:"audio/audio1.mp3", text:"Bravo, tu as brisé son innocence" },
-  { images:["images/set2trans1.jpg","images/set2trans2.jpg","images/set2trans3.jpg","images/set2trans4.jpg","images/set2final.jpg"], audio:"audio/audio2.mp3", text:"Et la Mère, fermant le livre du devoir, S'en allait satisfaite et très fière, sans voir, Dans les yeux bleus et sous le front plein d'éminences, L'âme de son enfant livrée aux répugnances." },
-  { images:["images/set3trans1.jpg","images/set3trans2.jpg","images/set3trans3.jpg","images/set3trans4.jpg","images/set3final.jpg"], audio:"audio/audio3.mp3", text:"Elles avaient confiance en toi" },
-  { images:["images/set4trans1.jpg","images/set4trans2.jpg","images/set4trans3.jpg","images/set4trans4.jpg","images/set4final.jpg"], audio:"audio/audio4.mp3", text:"Le silence a tout vu, tu ne peux plus rien cacher" },
-  { images:["images/set5trans1.jpg","images/set5trans2.jpg","images/set5trans3.jpg","images/set5trans4.jpg","images/set5final.jpg"], audio:"audio/audio5.mp3", text:"Les ombres te jugent, mais personne ne te sauvera" },
-  { images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"Tout s'effondre, et tu es seul face à la vérité" },
-  { images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"La fin approche, et le monde est devenu froid" },
-  { images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"Rien ne pourra réparer ce qui a été fait" },
-  { images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Le dernier souffle de l'innocence s'éteint ici" }
+  { images:["images/image1trans1.jpg","images/image1trans2.jpg","images/image1trans3.jpg","images/image1trans4.jpg","images/image1final.jpg"], audio:"audio/audio1.mp3", text:"Bravo, tu as brisé son innocence" },
+  { images:["images/image2trans1.jpg","images/image2trans2.jpg","images/image2trans3.jpg","images/image2trans4.jpg","images/image2final.jpg"], audio:"audio/audio2.mp3", text:"Et la Mère, fermant le livre du devoir, S'en allait satisfaite et très fière, sans voir, Dans les yeux bleus et sous le front plein d'éminences, L'âme de son enfant livrée aux répugnances." },
+  { images:["images/image3trans1.jpg","images/image3trans2.jpg","images/image3trans3.jpg","images/image3trans4.jpg","images/image3final.jpg"], audio:"audio/audio3.mp3", text:"Elles avaient confiance en toi" }
 ];
-
-// Choix aléatoire du set
 const chosenSet = sets[Math.floor(Math.random()*sets.length)];
 const transitions = chosenSet.images;
 const audioSrc = chosenSet.audio;
 const finalText = chosenSet.text;
 
-const steps = [10,20,30,40,47];
-
-// Préchargement images
+// --- Préchargement des images ---
 let loadedImages = [];
+const temp = document.createElement('canvas');
+const tctx = temp.getContext('2d');
+temp.width = canvas.width;
+temp.height = canvas.height;
+
 async function preloadImages(sources){
   const promises = sources.map(src => new Promise(resolve => {
     const img = new Image();
     img.src = src;
+    img.crossOrigin = "anonymous";
     img.onload = ()=>resolve(img);
     img.onerror = ()=>resolve(img);
   }));
   loadedImages = await Promise.all(promises);
 }
 
-// Canvas temporaires pour morphing
-const temp1 = document.createElement('canvas');
-const temp2 = document.createElement('canvas');
-const tctx1 = temp1.getContext('2d');
-const tctx2 = temp2.getContext('2d');
-temp1.width = canvas.width; temp1.height = canvas.height;
-temp2.width = canvas.width; temp2.height = canvas.height;
-
-// Audio
+// --- Audio ---
 const audioElement = document.getElementById('audio');
 audioElement.src = audioSrc;
 const finalAudioSrc = "audio/final_scream.mp3";
@@ -79,41 +68,16 @@ const source = audioCtx.createMediaElementSource(audioElement);
 const distortion = audioCtx.createWaveShaper();
 const filter = audioCtx.createBiquadFilter();
 const gainNode = audioCtx.createGain();
+const analyser = audioCtx.createAnalyser();
 source.connect(distortion);
 distortion.connect(filter);
 filter.connect(gainNode);
-gainNode.connect(audioCtx.destination);
+gainNode.connect(analyser);
+analyser.connect(audioCtx.destination);
 gainNode.gain.value = 1;
+analyser.fftSize = 256;
+const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-// Start button
-document.getElementById('startButton').addEventListener('click',()=>{
-  audioCtx.resume();
-  audioElement.play();
-  document.getElementById('startButton').style.display='none';
-});
-
-// Clicks
-let clickCount = 0, maxClicks = 47, ratio = 0, finalMode = false;
-document.body.addEventListener('click', ()=>{
-  if(finalMode) return;
-  if(clickCount < maxClicks) clickCount++;
-  ratio = clickCount / maxClicks;
-});
-
-// Crash final déclenché manuellement
-function activateFinalMode(){
-  finalMode = true;
-  audioElement.pause();
-  audioElement.src = finalAudioSrc;
-  audioElement.loop = true;
-  audioElement.play();
-  const ft = document.getElementById('finalText');
-  ft.innerText = finalText;
-  ft.style.display = 'block';
-  document.body.style.filter = 'none';
-}
-
-// Distorsion audio
 function makeDistortionCurve(amount){
   const curve = new Float32Array(44100);
   const deg = Math.PI/180;
@@ -124,7 +88,41 @@ function makeDistortionCurve(amount){
   return curve;
 }
 
-// Indices et alpha morphing
+// --- Start button ---
+document.getElementById('startButton').addEventListener('click',()=>{
+  audioCtx.resume();
+  audioElement.play();
+  document.getElementById('startButton').style.display='none';
+});
+
+// --- Clicks ---
+let clickCount = 0;
+const maxClicks = 47;
+let ratio = 0;
+let finalMode = false;
+
+document.body.addEventListener('click',()=>{
+  if(finalMode) return;
+  if(clickCount < maxClicks) clickCount++;
+  ratio = clickCount / maxClicks;
+  if(clickCount === maxClicks) activateFinalMode();
+});
+
+// --- Crash final identique HTML originel ---
+function activateFinalMode(){
+  finalMode = true;
+  audioElement.pause();
+  audioElement.src = finalAudioSrc;
+  audioElement.loop = true;
+  audioElement.play();
+  const ft = document.getElementById('finalText');
+  ft.innerText = finalText;
+  ft.style.display = 'block';
+}
+
+// --- Morphing progressif ---
+const steps = [10,20,30,40,47];
+
 function getTransitionIndex(clickCount){
   for(let i=0;i<steps.length;i++){
     if(clickCount <= steps[i]){
@@ -136,35 +134,26 @@ function getTransitionIndex(clickCount){
   return {prevIndex: transitions.length-2, nextIndex: transitions.length-1, alpha:1};
 }
 
-// Morphing optimisé
 function morphImages(ctx, img1, img2, alpha){
-  tctx1.clearRect(0,0,temp1.width,temp1.height);
-  tctx2.clearRect(0,0,temp2.width,temp2.height);
-  tctx1.drawImage(img1,0,0,temp1.width,temp1.height);
-  tctx2.drawImage(img2,0,0,temp2.width,temp2.height);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.globalAlpha = 1-alpha;
-  ctx.drawImage(temp1,0,0,canvas.width,canvas.height);
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(temp2,0,0,canvas.width,canvas.height);
-  ctx.globalAlpha = 1;
+  tctx.clearRect(0,0,temp.width,temp.height);
+  tctx.globalAlpha = 1-alpha;
+  tctx.drawImage(img1,0,0,temp.width,temp.height);
+  tctx.globalAlpha = alpha;
+  tctx.drawImage(img2,0,0,temp.width,temp.height);
+  tctx.globalAlpha = 1;
+  ctx.drawImage(temp,0,0,canvas.width,canvas.height);
 }
 
-// Animation
+// --- Draw loop ---
 async function draw(){
   await preloadImages(transitions);
   function frame(){
     requestAnimationFrame(frame);
 
-    // Crash déclenché après le dernier clic
-    if(clickCount > maxClicks){
-      if(!finalMode) activateFinalMode();
-
-      // Fond rouge uniforme
+    if(finalMode){
+      // Fond rouge + blocs glitchés
       ctx.fillStyle = "rgb(255,0,0)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
-
-      // Blocs glitchés tremblants
       const blockCount = 500;
       for(let i=0;i<blockCount;i++){
         const x=Math.floor(Math.random()*canvas.width);
@@ -183,7 +172,7 @@ async function draw(){
     const {prevIndex, nextIndex, alpha} = getTransitionIndex(clickCount);
     morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
-    // Fractures vibrantes jusqu’au dernier clic
+    // Fractures vibrantes
     const fracCount = Math.floor(ratio*50);
     const time = Date.now()*0.002;
     for(let i=0;i<fracCount;i++){
@@ -202,14 +191,12 @@ async function draw(){
     }
 
     // Couleurs progressives vers rouge
-    const targetContrast = 6;
-    const targetSaturate = 6;
-    const contrast = 1 + ratio*(targetContrast-1);
-    const saturate = 1 + ratio*(targetSaturate-1);
-    const hue = 0; // rouge
+    const contrast = 1 + ratio*5;
+    const saturate = 1 + ratio*5;
+    const hue = ratio*30; // lente progression vers rouge
     document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-    // Audio distortion progressive
+    // Audio distorsion progressive
     distortion.curve = makeDistortionCurve(ratio*700);
     distortion.oversample='4x';
     filter.type='allpass';
