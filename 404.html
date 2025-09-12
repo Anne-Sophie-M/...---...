@@ -18,7 +18,7 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <body>
 
 <canvas id="canvas"></canvas>
-<div id="finalText">innocence brisée</div>
+<div id="finalText">bravo, tu as brisée son innocence</div>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
 
@@ -28,45 +28,40 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const images = ["https://picsum.photos/1920/1080?random=1"];
-const audios = ["audio/audio1.mp3"]; // ajoute tes fichiers normaux
-const finalAudioSrc = "audio/final_scream.mp3"; // très aigu et désagréable
+// Images avec transitions pour chaque palier de clics
+const transitions = [
+  "images/image1.jpg", // clics 1-10
+  "images/image1trans2.jpg", // clics 11-20
+  "images/image1trans3.jpg", // clics 21-30
+  "images/image1trans4.jpg", // clics 31-40
+  "images/image1final.jpg"   // clics 41-47
+];
 
-let img = new Image();
-img.crossOrigin='anonymous';
-img.src = images[0];
+// Charger les images
+let loadedImages = transitions.map(src=>{
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = src;
+  return img;
+});
 
+// Canvas temporaire pour pixelisation
 const temp = document.createElement('canvas');
 const tctx = temp.getContext('2d');
 
+// Audio fixe
 const audioElement = document.getElementById('audio');
-audioElement.src = audios[0];
+audioElement.src = "audio/audio1.mp3";
 const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 const source = audioCtx.createMediaElementSource(audioElement);
 const distortion = audioCtx.createWaveShaper();
 const filter = audioCtx.createBiquadFilter();
 const gainNode = audioCtx.createGain();
-const analyser = audioCtx.createAnalyser();
 source.connect(distortion);
 distortion.connect(filter);
 filter.connect(gainNode);
-gainNode.connect(analyser);
-analyser.connect(audioCtx.destination);
+gainNode.connect(audioCtx.destination);
 gainNode.gain.value = 1;
-analyser.fftSize = 256;
-const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-function makeDistortionCurve(amount){
-  const k = amount;
-  const n = 44100;
-  const curve = new Float32Array(n);
-  const deg=Math.PI/180;
-  for(let i=0;i<n;i++){
-    const x = i*2/n-1;
-    curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
-  }
-  return curve;
-}
 
 // Start button
 document.getElementById('startButton').addEventListener('click',()=>{
@@ -76,67 +71,66 @@ document.getElementById('startButton').addEventListener('click',()=>{
 });
 
 // Clicks
-let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
-document.body.addEventListener('click',()=>{
-  if(clickCount<maxClicks) clickCount++;
-  ratio = clickCount/maxClicks;
-  if(clickCount===maxClicks) activateFinalMode();
+let clickCount = 0, maxClicks = 47, ratio = 0;
+document.body.addEventListener('click', ()=>{
+  if(clickCount < maxClicks) clickCount++;
+  ratio = clickCount / maxClicks;
 });
 
-function activateFinalMode(){
-  finalMode = true;
-  audioElement.pause();
-  audioElement.src = finalAudioSrc;
-  audioElement.loop = true;
-  audioElement.play();
-  distortion.curve = makeDistortionCurve(1500);
-  document.getElementById('finalText').style.display = 'block';
+// Fonction de blending
+function blendImages(ctx, img1, img2, w, h, alpha){
+  ctx.clearRect(0,0,w,h);
+  ctx.globalAlpha = 1;
+  ctx.drawImage(img1,0,0,w,h);
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(img2,0,0,w,h);
+  ctx.globalAlpha = 1;
 }
 
-img.onload = ()=>{ temp.width=img.width; temp.height=img.height; requestAnimationFrame(draw); }
+// Déterminer l’image actuelle et suivante selon le clic
+function getTransitionIndex(clickCount){
+  const steps = [10,20,30,40,47]; // bornes des clics pour chaque transition
+  for(let i=0;i<steps.length;i++){
+    if(clickCount <= steps[i]){
+      const prevIndex = i === 0 ? 0 : i-1;
+      const alpha = (clickCount - (i===0?0:steps[i-1])) / (steps[i] - (i===0?0:steps[i-1]));
+      return {prevIndex, nextIndex: i, alpha};
+    }
+  }
+  return {prevIndex: transitions.length-2, nextIndex: transitions.length-1, alpha:1};
+}
 
+// Fonction de distortion audio
+function makeDistortionCurve(amount){
+  const curve = new Float32Array(44100);
+  const deg = Math.PI/180;
+  for(let i=0;i<44100;i++){
+    const x = i*2/44100-1;
+    curve[i] = ((3+amount)*x*20*deg)/(Math.PI+amount*Math.abs(x));
+  }
+  return curve;
+}
+
+// Animation principale
 function draw(){
   requestAnimationFrame(draw);
-  const w=canvas.width;
-  const h=canvas.height;
+  const w = canvas.width;
+  const h = canvas.height;
 
-  if(finalMode){
-    // Écran rouge glitché
-    ctx.clearRect(0,0,w,h);
-    const blockCount = 500;
-    for(let i=0;i<blockCount;i++){
-      const x=Math.floor(Math.random()*w);
-      const y=Math.floor(Math.random()*h);
-      const bw=Math.floor(Math.random()*50+10);
-      const bh=Math.floor(Math.random()*50+10);
-      ctx.fillStyle = `rgba(255,0,0,${Math.random()*0.6+0.2})`;
-      ctx.fillRect(x,y,bw,bh);
-    }
-    return;
-  }
+  // Déterminer les images à afficher et l'alpha
+  const {prevIndex, nextIndex, alpha} = getTransitionIndex(clickCount);
+  const img1 = loadedImages[prevIndex];
+  const img2 = loadedImages[nextIndex];
 
-  // Pixelisation rapide et full screen
+  // Pixelisation
   const scale = 1 - 0.8*ratio;
-  const sw = Math.max(1, Math.floor(img.width*scale));
-  const sh = Math.max(1, Math.floor(img.height*scale));
+  const sw = Math.max(1, Math.floor(img1.width * scale));
+  const sh = Math.max(1, Math.floor(img1.height * scale));
   tctx.clearRect(0,0,temp.width,temp.height);
-  tctx.drawImage(img,0,0,img.width,img.height,0,0,sw,sh);
-  ctx.clearRect(0,0,w,h);
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(temp,0,0,sw,sh,0,0,w,h);
+  tctx.drawImage(img1,0,0,img1.width,img1.height,0,0,sw,sh);
 
-  // Glitch
-  const blockCount = Math.floor(ratio*200);
-  for(let i=0;i<blockCount;i++){
-    const bx = Math.floor(Math.random()*w);
-    const by = Math.floor(Math.random()*h);
-    const bw = Math.floor(Math.random()*30+5);
-    const bh = Math.floor(Math.random()*30+5);
-    const tempData = ctx.getImageData(bx,by,bw,bh);
-    const dx = Math.floor((Math.random()-0.5)*150*ratio);
-    const dy = Math.floor((Math.random()-0.5)*150*ratio);
-    ctx.putImageData(tempData,bx+dx,by+dy);
-  }
+  // Transition progressive vers l'image suivante
+  blendImages(ctx, temp, img2, w, h, alpha);
 
   // Fractures vibrantes
   const fracCount = Math.floor(ratio*50);
@@ -162,13 +156,15 @@ function draw(){
   const hue = ratio*360;
   document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-  // Audio distorsion + playback rate progressif
+  // Audio distortion progressive
   distortion.curve = makeDistortionCurve(ratio*700);
   distortion.oversample='4x';
   filter.type='allpass';
   filter.frequency.value = 500 + Math.random()*ratio*2000;
-  audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
+  audioElement.playbackRate = 1 + ratio*0.8;
 }
+
+draw();
 </script>
 
 </body>
