@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>L'Antre</title>
+<title>Glitch Finale 9 Sets</title>
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
@@ -98,10 +98,9 @@ document.body.addEventListener('click', ()=>{
   if(finalMode) return;
   if(clickCount < maxClicks) clickCount++;
   ratio = clickCount / maxClicks;
-  if(clickCount === maxClicks) activateFinalMode();
 });
 
-// Crash final
+// Crash final déclenché manuellement
 function activateFinalMode(){
   finalMode = true;
   audioElement.pause();
@@ -157,7 +156,10 @@ async function draw(){
   function frame(){
     requestAnimationFrame(frame);
 
-    if(finalMode){
+    // Crash déclenché après le dernier clic
+    if(clickCount > maxClicks){
+      if(!finalMode) activateFinalMode();
+
       // Fond rouge uniforme
       ctx.fillStyle = "rgb(255,0,0)";
       ctx.fillRect(0,0,canvas.width,canvas.height);
