@@ -35,8 +35,8 @@
     .hotspot {
       position: absolute;
       cursor: pointer;
-      background: rgba(255,0,0,0); /* temporaire visible pour test */
-      z-index: 10; /* au-dessus du texte */
+      background: rgba(255,0,0,0);
+      z-index: 10;
     }
 
     .center {
@@ -80,9 +80,12 @@
   <script>
     const phrases = [
       "je me souviens.",
-      "je ne me souviens pas.",
-      "elle se souvient pour moi.",
-      "le miroir se souvient.",
+      "I remember.",
+      "elle se souvient aussi",
+      "she remembers",
+      "le miroir se souvient",
+      "the mirror remembers",
+      "she's still behind the wall,
       "elle est toujours derrière le mur."
     ];
 
@@ -107,17 +110,23 @@
       const unstable = document.getElementById("unstable");
       const phrase = phrases[Math.floor(Math.random() * phrases.length)];
       unstable.innerHTML = glitchText(phrase);
+
+      // Vérifie si le mot de passe a déjà été entré
+      if(localStorage.getItem("rust9_access_granted") === "true") {
+        document.getElementById("password-popup").style.display = "none";
+      }
     }
 
-    // Mot de passe
-    const PASSWORD = "1222"; // mot de passe de l'ARG
+    // Mot de passe basé sur les cloches
+    const PASSWORD = "1222";
 
     function checkPassword() {
       const input = document.getElementById("pwd-input").value;
       if(input === PASSWORD) {
+        localStorage.setItem("rust9_access_granted", "true"); // mémorisation
         document.getElementById("password-popup").style.display = "none";
       } else {
-        alert("Mot de passe incorrect");
+        alert("Incorrect");
       }
     }
 
@@ -129,7 +138,7 @@
 <body>
   <!-- Popup mot de passe -->
   <div id="password-popup">
-    <h2>Entrez le mot de passe</h2>
+    <h2>Password Needed</h2>
     <input type="password" id="pwd-input" placeholder="Mot de passe" onkeydown="handleEnter(event)">
     <button onclick="checkPassword()">Entrer</button>
   </div>
@@ -139,12 +148,9 @@
     <a href="404.html" class="hotspot" id="hotspot"></a>
 
     <div class="center">
-      <h1>MiroirFêlé</h1>
+      <h1>...---...</h1>
       <p id="unstable"></p>
-      <nav>
-        <a href="voices.html">voices</a> | 
-        <a href="mirror.html">mirror</a>
-      </nav>
+     
     </div>
   </div>
 
@@ -169,3 +175,4 @@
   </script>
 </body>
 </html>
+
