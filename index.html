@@ -47,14 +47,14 @@
       text-align: center;
     }
 
-    /* Popup mot de passe */
+    /* Password popup */
     #password-popup {
       position: fixed;
       top:0;
       left:0;
       width:100%;
       height:100%;
-      background: rgba(0,0,0,1);
+      background: rgba(0,0,0,0.95);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -111,22 +111,22 @@
       const phrase = phrases[Math.floor(Math.random() * phrases.length)];
       unstable.innerHTML = glitchText(phrase);
 
-      // Vérifie si le mot de passe a déjà été entré
+      // Check if password was already entered
       if(localStorage.getItem("rust9_access_granted") === "true") {
         document.getElementById("password-popup").style.display = "none";
       }
     }
 
-    // Mot de passe basé sur les cloches
+    // Password based on your ARG
     const PASSWORD = "1222";
 
     function checkPassword() {
       const input = document.getElementById("pwd-input").value;
       if(input === PASSWORD) {
-        localStorage.setItem("rust9_access_granted", "true"); // mémorisation
+        localStorage.setItem("rust9_access_granted", "true");
         document.getElementById("password-popup").style.display = "none";
       } else {
-        alert("Incorrect");
+        alert("Incorrect password");
       }
     }
 
@@ -136,21 +136,21 @@
   </script>
 </head>
 <body>
-  <!-- Popup mot de passe -->
+  <!-- Password popup -->
   <div id="password-popup">
-    <h2>Password Needed</h2>
-    <input type="password" id="pwd-input" placeholder="Mot de passe" onkeydown="handleEnter(event)">
+    <h2>Enter password</h2>
+    <input type="password" id="pwd-input" placeholder="Password" onkeydown="handleEnter(event)">
     <button onclick="checkPassword()">Enter</button>
   </div>
 
   <div class="image-container">
-    <img src="images/background.jpg" alt="dessin" id="bg-image">
+    <img src="images/background.jpg" alt="drawing" id="bg-image">
     <a href="404.html" class="hotspot" id="hotspot"></a>
 
     <div class="center">
-      <h1>...---...</h1>
+      <h1>CrackedMirror</h1>
       <p id="unstable"></p>
-     
+    
     </div>
   </div>
 
@@ -175,4 +175,3 @@
   </script>
 </body>
 </html>
-
