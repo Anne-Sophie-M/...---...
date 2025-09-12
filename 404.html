@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Glitch Finale</title>
+<title>Glitch Finale Morphing</title>
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
@@ -18,7 +18,7 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <body>
 
 <canvas id="canvas"></canvas>
-<div id="finalText">bravo, tu as brisée son innocence</div>
+<div id="finalText">innocence brisée</div>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
 
@@ -28,7 +28,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Images avec transitions pour chaque palier de clics
+// Images de transition (plein écran)
 const transitions = [
   "images/image1.jpg", // clics 1-10
   "images/image1trans2.jpg", // clics 11-20
@@ -37,17 +37,26 @@ const transitions = [
   "images/image1final.jpg"   // clics 41-47
 ];
 
-// Charger les images
-let loadedImages = transitions.map(src=>{
+const steps = [10,20,30,40,47]; // bornes des clics
+
+// Préchargement des images
+let loadedImages = [];
+let imagesLoadedCount = 0;
+for(let src of transitions){
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.src = src;
-  return img;
-});
+  img.onload = ()=>{ imagesLoadedCount++; };
+  loadedImages.push(img);
+}
 
-// Canvas temporaire pour pixelisation
-const temp = document.createElement('canvas');
-const tctx = temp.getContext('2d');
+// Canvas temporaire pour le morphing
+const temp1 = document.createElement('canvas');
+const temp2 = document.createElement('canvas');
+const tctx1 = temp1.getContext('2d');
+const tctx2 = temp2.getContext('2d');
+temp1.width = canvas.width; temp1.height = canvas.height;
+temp2.width = canvas.width; temp2.height = canvas.height;
 
 // Audio fixe
 const audioElement = document.getElementById('audio');
@@ -77,30 +86,7 @@ document.body.addEventListener('click', ()=>{
   ratio = clickCount / maxClicks;
 });
 
-// Fonction de blending
-function blendImages(ctx, img1, img2, w, h, alpha){
-  ctx.clearRect(0,0,w,h);
-  ctx.globalAlpha = 1;
-  ctx.drawImage(img1,0,0,w,h);
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(img2,0,0,w,h);
-  ctx.globalAlpha = 1;
-}
-
-// Déterminer l’image actuelle et suivante selon le clic
-function getTransitionIndex(clickCount){
-  const steps = [10,20,30,40,47]; // bornes des clics pour chaque transition
-  for(let i=0;i<steps.length;i++){
-    if(clickCount <= steps[i]){
-      const prevIndex = i === 0 ? 0 : i-1;
-      const alpha = (clickCount - (i===0?0:steps[i-1])) / (steps[i] - (i===0?0:steps[i-1]));
-      return {prevIndex, nextIndex: i, alpha};
-    }
-  }
-  return {prevIndex: transitions.length-2, nextIndex: transitions.length-1, alpha:1};
-}
-
-// Fonction de distortion audio
+// Distorsion audio
 function makeDistortionCurve(amount){
   const curve = new Float32Array(44100);
   const deg = Math.PI/180;
@@ -111,33 +97,61 @@ function makeDistortionCurve(amount){
   return curve;
 }
 
-// Animation principale
+// Retourne indices et alpha pour morphing
+function getTransitionIndex(clickCount){
+  for(let i=0;i<steps.length;i++){
+    if(clickCount <= steps[i]){
+      const prevIndex = i === 0 ? 0 : i-1;
+      const alpha = (clickCount - (i===0?0:steps[i-1])) / (steps[i] - (i===0?0:steps[i-1]));
+      return {prevIndex, nextIndex:i, alpha};
+    }
+  }
+  return {prevIndex: transitions.length-2, nextIndex: transitions.length-1, alpha:1};
+}
+
+// Morphing pixel par pixel
+function morphImages(ctx, img1, img2, alpha){
+  temp1.width = canvas.width; temp1.height = canvas.height;
+  temp2.width = canvas.width; temp2.height = canvas.height;
+  tctx1.clearRect(0,0,temp1.width,temp1.height);
+  tctx2.clearRect(0,0,temp2.width,temp2.height);
+  
+  tctx1.drawImage(img1,0,0,temp1.width,temp1.height);
+  tctx2.drawImage(img2,0,0,temp2.width,temp2.height);
+  
+  const imgData1 = tctx1.getImageData(0,0,temp1.width,temp1.height);
+  const imgData2 = tctx2.getImageData(0,0,temp2.width,temp2.height);
+  const data1 = imgData1.data;
+  const data2 = imgData2.data;
+  
+  for(let i=0;i<data1.length;i+=4){
+    data1[i]   = data1[i]*(1-alpha) + data2[i]*alpha;     // R
+    data1[i+1] = data1[i+1]*(1-alpha) + data2[i+1]*alpha; // G
+    data1[i+2] = data1[i+2]*(1-alpha) + data2[i+2]*alpha; // B
+    data1[i+3] = 255; // Alpha
+  }
+  
+  ctx.putImageData(imgData1,0,0);
+}
+
+// Animation
 function draw(){
   requestAnimationFrame(draw);
-  const w = canvas.width;
-  const h = canvas.height;
+  if(imagesLoadedCount < loadedImages.length) return; // attendre chargement
 
-  // Déterminer les images à afficher et l'alpha
   const {prevIndex, nextIndex, alpha} = getTransitionIndex(clickCount);
   const img1 = loadedImages[prevIndex];
   const img2 = loadedImages[nextIndex];
 
-  // Pixelisation
-  const scale = 1 - 0.8*ratio;
-  const sw = Math.max(1, Math.floor(img1.width * scale));
-  const sh = Math.max(1, Math.floor(img1.height * scale));
-  tctx.clearRect(0,0,temp.width,temp.height);
-  tctx.drawImage(img1,0,0,img1.width,img1.height,0,0,sw,sh);
-
-  // Transition progressive vers l'image suivante
-  blendImages(ctx, temp, img2, w, h, alpha);
+  // Morphing
+  morphImages(ctx, img1, img2, alpha);
 
   // Fractures vibrantes
   const fracCount = Math.floor(ratio*50);
   const time = Date.now()*0.002;
   for(let i=0;i<fracCount;i++){
-    const x1 = Math.floor(Math.random()*w);
-    const y1 = Math.floor(Math.random()*h);
+    const x1 = Math.floor(Math.random()*canvas.width);
+    const y1 = Math.floor(Math.random()*canvas.height);
     const offsetX = Math.sin(time+i)*50*ratio;
     const offsetY = Math.cos(time+i)*50*ratio;
     const x2 = x1 + Math.floor(offsetX);
@@ -162,6 +176,11 @@ function draw(){
   filter.type='allpass';
   filter.frequency.value = 500 + Math.random()*ratio*2000;
   audioElement.playbackRate = 1 + ratio*0.8;
+
+  // Affichage du texte final au 48ème clic
+  if(clickCount >= maxClicks){
+    document.getElementById('finalText').style.display = 'block';
+  }
 }
 
 draw();
