@@ -50,14 +50,14 @@ const finalText = chosenSet.text;
 
 const steps = [10,20,30,40,47];
 
-// Préchargement images avec Promise
+// Préchargement images
 let loadedImages = [];
 async function preloadImages(sources){
   const promises = sources.map(src => new Promise(resolve => {
     const img = new Image();
     img.src = src;
     img.onload = ()=>resolve(img);
-    img.onerror = ()=>resolve(img); // si erreur, ne bloque pas
+    img.onerror = ()=>resolve(img);
   }));
   loadedImages = await Promise.all(promises);
 }
@@ -111,7 +111,6 @@ function activateFinalMode(){
   const ft = document.getElementById('finalText');
   ft.innerText = finalText;
   ft.style.display = 'block';
-  // Désactive les filtres CSS pour que l'écran reste rouge
   document.body.style.filter = 'none';
 }
 
@@ -138,13 +137,12 @@ function getTransitionIndex(clickCount){
   return {prevIndex: transitions.length-2, nextIndex: transitions.length-1, alpha:1};
 }
 
-// Morphing optimisé et rapide
+// Morphing optimisé
 function morphImages(ctx, img1, img2, alpha){
   tctx1.clearRect(0,0,temp1.width,temp1.height);
   tctx2.clearRect(0,0,temp2.width,temp2.height);
   tctx1.drawImage(img1,0,0,temp1.width,temp1.height);
   tctx2.drawImage(img2,0,0,temp2.width,temp2.height);
-  // Utilisation directe de globalAlpha pour fluidité
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.globalAlpha = 1-alpha;
   ctx.drawImage(temp1,0,0,canvas.width,canvas.height);
@@ -155,20 +153,23 @@ function morphImages(ctx, img1, img2, alpha){
 
 // Animation
 async function draw(){
-  await preloadImages(transitions); // attend chargement
+  await preloadImages(transitions);
   function frame(){
     requestAnimationFrame(frame);
 
     if(finalMode){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // Fond rouge + blocs glitchés tremblants
+      ctx.fillStyle = "rgb(255,0,0)";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
       const blockCount = 500;
       for(let i=0;i<blockCount;i++){
         const x=Math.floor(Math.random()*canvas.width);
         const y=Math.floor(Math.random()*canvas.height);
         const bw=Math.floor(Math.random()*50+10);
         const bh=Math.floor(Math.random()*50+10);
-        const offsetX = Math.floor((Math.random()-0.5)*20); // tremblement horizontal
-        const offsetY = Math.floor((Math.random()-0.5)*20); // tremblement vertical
+        const offsetX = Math.floor((Math.random()-0.5)*20);
+        const offsetY = Math.floor((Math.random()-0.5)*20);
         ctx.fillStyle = `rgba(255,0,0,${Math.random()*0.6+0.2})`;
         ctx.fillRect(x+offsetX,y+offsetY,bw,bh);
       }
@@ -196,7 +197,7 @@ async function draw(){
       ctx.stroke();
     }
 
-    // CSS filtre uniquement avant le crash
+    // CSS filtre uniquement avant crash
     if(!finalMode){
       const contrast = 1 + ratio*5;
       const saturate = 1 + ratio*5;
