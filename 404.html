@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Glitch Finale Morphing</title>
+<title>Glitch Finale Morphing + Crash</title>
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
@@ -18,7 +18,7 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <body>
 
 <canvas id="canvas"></canvas>
-<div id="finalText">innocence brisée</div>
+<div id="finalText">bravo, tu as brisée son innocence</div>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
 
@@ -58,9 +58,10 @@ const tctx2 = temp2.getContext('2d');
 temp1.width = canvas.width; temp1.height = canvas.height;
 temp2.width = canvas.width; temp2.height = canvas.height;
 
-// Audio fixe
+// Audio
 const audioElement = document.getElementById('audio');
 audioElement.src = "audio/audio1.mp3";
+const finalAudioSrc = "audio/final_scream.mp3"; // crash final
 const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 const source = audioCtx.createMediaElementSource(audioElement);
 const distortion = audioCtx.createWaveShaper();
@@ -80,11 +81,23 @@ document.getElementById('startButton').addEventListener('click',()=>{
 });
 
 // Clicks
-let clickCount = 0, maxClicks = 47, ratio = 0;
+let clickCount = 0, maxClicks = 47, ratio = 0, finalMode = false;
 document.body.addEventListener('click', ()=>{
+  if(finalMode) return; // plus de clics après le crash
   if(clickCount < maxClicks) clickCount++;
   ratio = clickCount / maxClicks;
+  if(clickCount === maxClicks) activateFinalMode();
 });
+
+// Active le crash final
+function activateFinalMode(){
+  finalMode = true;
+  audioElement.pause();
+  audioElement.src = finalAudioSrc;
+  audioElement.loop = true;
+  audioElement.play();
+  document.getElementById('finalText').style.display = 'block';
+}
 
 // Distorsion audio
 function makeDistortionCurve(amount){
@@ -125,10 +138,10 @@ function morphImages(ctx, img1, img2, alpha){
   const data2 = imgData2.data;
   
   for(let i=0;i<data1.length;i+=4){
-    data1[i]   = data1[i]*(1-alpha) + data2[i]*alpha;     // R
-    data1[i+1] = data1[i+1]*(1-alpha) + data2[i+1]*alpha; // G
-    data1[i+2] = data1[i+2]*(1-alpha) + data2[i+2]*alpha; // B
-    data1[i+3] = 255; // Alpha
+    data1[i]   = data1[i]*(1-alpha) + data2[i]*alpha;
+    data1[i+1] = data1[i+1]*(1-alpha) + data2[i+1]*alpha;
+    data1[i+2] = data1[i+2]*(1-alpha) + data2[i+2]*alpha;
+    data1[i+3] = 255;
   }
   
   ctx.putImageData(imgData1,0,0);
@@ -137,6 +150,22 @@ function morphImages(ctx, img1, img2, alpha){
 // Animation
 function draw(){
   requestAnimationFrame(draw);
+
+  if(finalMode){
+    // Crash final : écran rouge glitché
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const blockCount = 500;
+    for(let i=0;i<blockCount;i++){
+      const x=Math.floor(Math.random()*canvas.width);
+      const y=Math.floor(Math.random()*canvas.height);
+      const bw=Math.floor(Math.random()*50+10);
+      const bh=Math.floor(Math.random()*50+10);
+      ctx.fillStyle = `rgba(255,0,0,${Math.random()*0.6+0.2})`;
+      ctx.fillRect(x,y,bw,bh);
+    }
+    return;
+  }
+
   if(imagesLoadedCount < loadedImages.length) return; // attendre chargement
 
   const {prevIndex, nextIndex, alpha} = getTransitionIndex(clickCount);
@@ -176,11 +205,6 @@ function draw(){
   filter.type='allpass';
   filter.frequency.value = 500 + Math.random()*ratio*2000;
   audioElement.playbackRate = 1 + ratio*0.8;
-
-  // Affichage du texte final au 48ème clic
-  if(clickCount >= maxClicks){
-    document.getElementById('finalText').style.display = 'block';
-  }
 }
 
 draw();
