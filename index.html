@@ -46,6 +46,35 @@
       width: 100%;
       text-align: center;
     }
+
+    /* Popup mot de passe */
+    #password-popup {
+      position: fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      flex-direction: column;
+      color: white;
+    }
+
+    #password-popup input {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      margin-top: 10px;
+    }
+
+    #password-popup button {
+      margin-top: 10px;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
   </style>
 
   <script>
@@ -79,9 +108,32 @@
       const phrase = phrases[Math.floor(Math.random() * phrases.length)];
       unstable.innerHTML = glitchText(phrase);
     }
+
+    // Mot de passe
+    const PASSWORD = "1222122212221222122212221222122212221222"; // mot de passe de l'ARG
+
+    function checkPassword() {
+      const input = document.getElementById("pwd-input").value;
+      if(input === PASSWORD) {
+        document.getElementById("password-popup").style.display = "none";
+      } else {
+        alert("Mot de passe incorrect");
+      }
+    }
+
+    function handleEnter(e) {
+      if(e.key === "Enter") checkPassword();
+    }
   </script>
 </head>
 <body>
+  <!-- Popup mot de passe -->
+  <div id="password-popup">
+    <h2>Entrez le mot de passe</h2>
+    <input type="password" id="pwd-input" placeholder="Mot de passe" onkeydown="handleEnter(event)">
+    <button onclick="checkPassword()">Entrer</button>
+  </div>
+
   <div class="image-container">
     <img src="images/background.jpg" alt="dessin" id="bg-image">
     <a href="404.html" class="hotspot" id="hotspot"></a>
