@@ -54,7 +54,7 @@
       left:0;
       width:100%;
       height:100%;
-      background: rgba(0,0,0,0.95);
+      background: rgba(0,0,0,1);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -76,10 +76,28 @@
       cursor: pointer;
     }
   </style>
+</head>
+<body>
+  <!-- Password popup -->
+  <div id="password-popup">
+    <h2>Enter password</h2>
+    <input type="password" id="pwd-input" placeholder="Password">
+    <button id="pwd-button">Enter</button>
+  </div>
+
+  <div class="image-container">
+    <img src="images/background.jpg" alt="drawing" id="bg-image">
+    <a href="404.html" class="hotspot" id="hotspot"></a>
+
+    <div class="center">
+      <h1>CrackedMirror</h1>
+      <p id="unstable"></p>
+    </div>
+  </div>
 
   <script>
     const phrases = [
-      "je me souviens.",
+       "je me souviens.",
       "I remember.",
       "elle se souvient aussi",
       "she remembers",
@@ -106,55 +124,44 @@
       }).join("");
     }
 
-    window.onload = () => {
+    const PASSWORD = "1222";
+
+    window.onload = function() {
+      // Glitch text
       const unstable = document.getElementById("unstable");
       const phrase = phrases[Math.floor(Math.random() * phrases.length)];
       unstable.innerHTML = glitchText(phrase);
 
+      // Popup elements
+      const popup = document.getElementById("password-popup");
+      const input = document.getElementById("pwd-input");
+      const button = document.getElementById("pwd-button");
+
       // Check if password was already entered
       if(localStorage.getItem("rust9_access_granted") === "true") {
-        document.getElementById("password-popup").style.display = "none";
+        popup.style.display = "none";
       }
-    }
 
-    // Password based on your ARG
-    const PASSWORD = "1222";
-
-    function checkPassword() {
-      const input = document.getElementById("pwd-input").value;
-      if(input === PASSWORD) {
-        localStorage.setItem("rust9_access_granted", "true");
-        document.getElementById("password-popup").style.display = "none";
-      } else {
-        alert("Incorrect password");
+      function checkPassword() {
+        const val = input.value.trim();
+        if(val === PASSWORD) {
+          localStorage.setItem("rust9_access_granted", "true");
+          popup.style.display = "none";
+        } else {
+          alert("Incorrect password");
+        }
       }
-    }
 
-    function handleEnter(e) {
-      if(e.key === "Enter") checkPassword();
-    }
-  </script>
-</head>
-<body>
-  <!-- Password popup -->
-  <div id="password-popup">
-    <h2>Enter password</h2>
-    <input type="password" id="pwd-input" placeholder="Password" onkeydown="handleEnter(event)">
-    <button onclick="checkPassword()">Enter</button>
-  </div>
+      // Button click
+      button.addEventListener("click", checkPassword);
 
-  <div class="image-container">
-    <img src="images/background.jpg" alt="drawing" id="bg-image">
-    <a href="404.html" class="hotspot" id="hotspot"></a>
+      // Enter key
+      input.addEventListener("keydown", function(e){
+        if(e.key === "Enter") checkPassword();
+      });
+    };
 
-    <div class="center">
-      <h1>CrackedMirror</h1>
-      <p id="unstable"></p>
-    
-    </div>
-  </div>
-
-  <script>
+    // Hotspot scaling
     const hotspotBox = { x: 1600, y: 380, w: 20, h: 20 };
     const bgImage = document.getElementById("bg-image");
     const hotspot = document.getElementById("hotspot");
