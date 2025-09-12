@@ -85,6 +85,9 @@
     <button id="pwd-button">Enter</button>
   </div>
 
+  <!-- Error sound -->
+  <audio id="error-sound" src="audio/error.mp3" preload="auto"></audio>
+
   <div class="image-container">
     <img src="images/background.jpg" alt="drawing" id="bg-image">
     <a href="sic_semper_tyrannis.html" class="hotspot" id="hotspot"></a>
@@ -97,7 +100,7 @@
 
   <script>
     const phrases = [
-       "je me souviens.",
+      "je me souviens.",
       "I remember.",
       "elle se souvient aussi",
       "she remembers",
@@ -136,6 +139,7 @@
       const popup = document.getElementById("password-popup");
       const input = document.getElementById("pwd-input");
       const button = document.getElementById("pwd-button");
+      const errorSound = document.getElementById("error-sound");
 
       // Check if password was already entered
       if(localStorage.getItem("rust9_access_granted") === "true") {
@@ -148,6 +152,8 @@
           localStorage.setItem("rust9_access_granted", "true");
           popup.style.display = "none";
         } else {
+          errorSound.currentTime = 0; // reset sound
+          errorSound.play();
           alert("Incorrect password");
         }
       }
