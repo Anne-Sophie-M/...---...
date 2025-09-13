@@ -1,101 +1,296 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Test Set9 Special</title>
+<meta charset="utf-8" />
+<title>Test set9 — glitch + arrêt au clic 46</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-html,body {
-  margin:0; padding:0; width:100%; height:100%;
-  background:black; overflow:hidden;
-}
-canvas {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-}
-#special {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  display:none; z-index:10;
-}
-#startButton {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background:transparent; border:none; cursor:pointer;
-  z-index:20;
-}
+  html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
+  canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0;}
+  #startButton {
+    position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none;
+    cursor:pointer; z-index:10; color:transparent;
+  }
 </style>
 </head>
 <body>
+
 <canvas id="canvas"></canvas>
-<img id="special" src="images/set9special.jpg">
 <audio id="audio" src="audio/audio9.mp3" loop></audio>
-<button id="startButton"></button>
+<button id="startButton">START (click)</button>
 
 <script>
+// -------- Configuration / ressources --------
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const images = [
+const imagesPaths = [
   "images/set9trans1.jpg",
   "images/set9trans2.jpg",
   "images/set9trans3.jpg",
   "images/set9trans4.jpg",
   "images/set9final.jpg"
 ];
+const specialPath = "images/set9special.jpg";
+const audioEl = document.getElementById('audio');
 
-let loaded = [];
+// état
+let loadedImgs = [];        // images pour morph
+let specialImg = null;      // image spéciale
 let clickCount = 0;
-let specialVisible = false;
+const maxClicks = 47;
+let ratio = 0;
+let runningEffects = true;  // quand false : on arrête glitchs/filters
+let started = false;
 
-function preload(srcs){
-  return Promise.all(srcs.map(src=>{
-    return new Promise(res=>{
-      const img=new Image();
-      img.onload=()=>res(img);
-      img.src=src;
-    });
-  }));
+// --- Web Audio nodes (créés maintenant, resume() appelé au clic start) ---
+let audioCtx = null;
+let mediaSource = null;
+let distortion = null;
+let biquad = null;
+let gainNode = null;
+
+function setupAudioNodes() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  mediaSource = audioCtx.createMediaElementSource(audioEl);
+  distortion = audioCtx.createWaveShaper();
+  biquad = audioCtx.createBiquadFilter();
+  gainNode = audioCtx.createGain();
+  // chain: source -> distortion -> biquad -> gain -> destination
+  mediaSource.connect(distortion);
+  distortion.connect(biquad);
+  biquad.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  gainNode.gain.value = 1;
 }
 
-function morph(img1,img2,alpha){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.globalAlpha=1-alpha;
-  ctx.drawImage(img1,0,0,canvas.width,canvas.height);
-  ctx.globalAlpha=alpha;
-  ctx.drawImage(img2,0,0,canvas.width,canvas.height);
-  ctx.globalAlpha=1;
+// -------- Helpers --------
+function makeDistortionCurve(amount){
+  const k = amount;
+  const n = 44100;
+  const curve = new Float32Array(n);
+  const deg = Math.PI/180;
+  for (let i=0;i<n;i++){
+    const x = i*2/n - 1;
+    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+  }
+  return curve;
 }
 
-function draw(){
-  if(specialVisible) return; // stop rendering once special is visible
-  requestAnimationFrame(draw);
-
-  let index=Math.min(Math.floor(clickCount/10),images.length-2);
-  let alpha=(clickCount%10)/10;
-  morph(loaded[index],loaded[index+1],alpha);
+function preload(srcList){
+  return Promise.all(srcList.map(src => new Promise(res => {
+    const img = new Image();
+    img.src = src;
+    img.crossOrigin = "anonymous";
+    img.onload = ()=>res(img);
+    img.onerror = ()=>res(img); // on résout même si échec pour ne pas bloquer
+  })));
 }
 
-document.getElementById('startButton').addEventListener('click',()=>{
-  document.getElementById('startButton').style.display="none";
-  document.getElementById('audio').play();
-  draw();
+// -------- Start (user gesture required for audio autoplay) --------
+document.getElementById('startButton').addEventListener('click', async () => {
+  if (started) return;
+  started = true;
+  // setup audio nodes and start audio
+  setupAudioNodes();
+  await audioCtx.resume().catch(()=>{ /* ignore */ });
+  audioEl.play().catch(()=>{ console.log("audio blocked"); });
+
+  // preload images & special
+  loadedImgs = await preload(imagesPaths);
+  const sp = new Image();
+  sp.src = specialPath;
+  sp.onload = ()=>specialImg = sp;
+  sp.onerror = ()=>specialImg = null;
+
+  // hide start button
+  document.getElementById('startButton').style.display = 'none';
+
+  // start the draw loop
+  requestAnimationFrame(drawFrame);
 });
 
-document.body.addEventListener('click',()=>{
-  if(specialVisible) return;
-  clickCount++;
-  if(clickCount===46){
-    // Stop tout et affiche image spéciale
-    document.getElementById('audio').pause();
-    document.body.style.filter=""; // reset filtres
-    document.getElementById('special').style.display="block";
-    specialVisible=true;
+// -------- Click handling --------
+document.body.addEventListener('click', (e) => {
+  // rely on clickCount only after start
+  if (!started) return;
+  if (!runningEffects) return; // if already in special state, ignore further normal clicks
+
+  // increment
+  if (clickCount < maxClicks) clickCount++;
+  ratio = clickCount / maxClicks;
+
+  // if reach click 46 exactly -> stop all effects and show special
+  if (clickCount === 46) {
+    // STOP effects & audio, display special image on canvas (without any filters)
+    runningEffects = false;
+
+    // stop audio
+    try {
+      audioEl.pause();
+      if (audioCtx && audioCtx.state === "running") audioCtx.suspend();
+    } catch(e){}
+
+    // reset any body filter
+    document.body.style.filter = "";
+
+    // draw special image (once) when available, else clear canvas
+    if (specialImg) {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(specialImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // if the special image not loaded yet, fill with black so it's "clean"
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    console.log("==> Clic 46 : effets stoppés, special affiché (no effects)");
+    return;
   }
 });
 
-preload(images).then(imgs=>{
-  loaded=imgs;
-  ctx.drawImage(loaded[0],0,0,canvas.width,canvas.height);
-});
+// -------- Draw frame: morphing + glitch + filters + audio distortion --------
+function drawFrame(){
+  // loop
+  requestAnimationFrame(drawFrame);
+
+  // if effects stopped (special shown), don't draw more
+  if (!runningEffects) return;
+
+  // ensure loaded images exist
+  if (!loadedImgs || loadedImgs.length === 0) return;
+
+  // morphing: compute indices (same logic que ton code d'origine)
+  const steps = [10,20,30,40,47];
+  let prevIndex = 0, nextIndex = 1, alpha = 1;
+  for (let i=0;i<steps.length;i++){
+    if (clickCount <= steps[i]) {
+      prevIndex = i===0 ? 0 : i-1;
+      nextIndex = i;
+      const start = i===0 ? 0 : steps[i-1];
+      alpha = (clickCount - start) / (steps[i] - start);
+      break;
+    }
+  }
+  // clamp indices
+  prevIndex = Math.max(0, Math.min(prevIndex, loadedImgs.length-1));
+  nextIndex = Math.max(0, Math.min(nextIndex, loadedImgs.length-1));
+
+  // draw morph
+  tctx = document.createElement('canvas').getContext('2d'); // temp small canvas
+  // use the existing temp canvas to avoid re-creating each frame
+  // (we will reuse one global temp to keep similarity with your code)
+}
+
+// To keep code clean and closer to your original, implement the draw logic exactly:
+let temp = document.createElement('canvas');
+let tctx = temp.getContext('2d');
+temp.width = canvas.width;
+temp.height = canvas.height;
+
+function morphImages(ctxMain, imgA, imgB, alpha){
+  tctx.clearRect(0,0,temp.width,temp.height);
+  tctx.globalAlpha = 1 - alpha;
+  tctx.drawImage(imgA, 0, 0, temp.width, temp.height);
+  tctx.globalAlpha = alpha;
+  tctx.drawImage(imgB, 0, 0, temp.width, temp.height);
+  tctx.globalAlpha = 1;
+  ctxMain.drawImage(temp, 0, 0, canvas.width, canvas.height);
+}
+
+function drawEffectsFrame(){
+  // morph base
+  const {prevIndex, nextIndex, alpha} = getTransitionIndex(clickCount);
+  morphImages(ctx, loadedImgs[prevIndex], loadedImgs[nextIndex], alpha);
+
+  const w = canvas.width, h = canvas.height;
+
+  // glitch blocs
+  const blockCount = Math.floor(ratio * 200);
+  for (let i=0;i<blockCount;i++){
+    const bx = Math.floor(Math.random()*w);
+    const by = Math.floor(Math.random()*h);
+    const bw = Math.floor(Math.random()*30 + 5);
+    const bh = Math.floor(Math.random()*30 + 5);
+    try {
+      const tempData = ctx.getImageData(bx,by,bw,bh);
+      const dx = Math.floor((Math.random()-0.5) * 150 * ratio);
+      const dy = Math.floor((Math.random()-0.5) * 150 * ratio);
+      ctx.putImageData(tempData, bx+dx, by+dy);
+    } catch(e){
+      // getImageData may throw if coordinates out-of-bounds; ignore safely
+    }
+  }
+
+  // fractures vibrantes
+  const fracCount = Math.floor(ratio * 50);
+  const time = Date.now() * 0.002;
+  for (let i=0;i<fracCount;i++){
+    const x1 = Math.floor(Math.random() * w);
+    const y1 = Math.floor(Math.random() * h);
+    const offsetX = Math.sin(time + i) * 50 * ratio;
+    const offsetY = Math.cos(time + i) * 50 * ratio;
+    const x2 = x1 + Math.floor(offsetX);
+    const y2 = y1 + Math.floor(offsetY);
+    ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+    ctx.lineWidth = 1 + ratio*2;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+  }
+
+  // CSS filter on body
+  const contrast = 1 + ratio * 5;
+  const saturate = 1 + ratio * 5;
+  const hue = ratio * 360;
+  document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
+
+  // Audio distortion + playback rate
+  if (distortion && biquad && gainNode) {
+    try {
+      distortion.curve = makeDistortionCurve(ratio * 700);
+      distortion.oversample = '4x';
+      biquad.type = 'allpass';
+      biquad.frequency.value = 500 + Math.random() * ratio * 2000;
+      audioEl.playbackRate = 1 + ratio * 0.8 + Math.random() * 0.02;
+    } catch(e){}
+  }
+}
+
+function getTransitionIndex(clickCountLocal){
+  for (let i=0;i<steps.length;i++){
+    if (clickCountLocal <= steps[i]) {
+      const prev = i===0 ? 0 : i-1;
+      const start = i===0 ? 0 : steps[i-1];
+      const alphaLocal = (clickCountLocal - start) / (steps[i] - start);
+      return { prevIndex: prev, nextIndex: i, alpha: Math.max(0, Math.min(1, alphaLocal)) };
+    }
+  }
+  return { prevIndex: loadedImgs.length - 2, nextIndex: loadedImgs.length - 1, alpha: 1 };
+}
+
+const steps = [10,20,30,40,47];
+
+// main RAF loop (separate small loop that calls drawEffectsFrame while runningEffects is true)
+function mainLoop(){
+  if (!started) {
+    requestAnimationFrame(mainLoop);
+    return;
+  }
+  if (runningEffects) {
+    drawEffectsFrame();
+  }
+  requestAnimationFrame(mainLoop);
+}
+
+// launch main loop (it will wait until started)
+mainLoop();
+
 </script>
 </body>
 </html>
