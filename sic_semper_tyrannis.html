@@ -2,19 +2,23 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Test Set9gg</title>
+<title>Test Set9</title>
 <style>
-html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
-canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
-#finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
+html, body {
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;
+}
+canvas {
+    position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover;
+}
+#startButton {
+    position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;
+}
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<div id="finalText"></div>
 <audio id="audio" loop></audio>
-<button id="startButton"></button>
+<button id="startButton">Start</button>
 
 <script>
 const canvas = document.getElementById('canvas');
@@ -22,25 +26,34 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// --- Set9 uniquement pour ce test ---
+// --- Set9 ---
 const set9 = {
-    images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"],
-    audio:"audio/audio9.mp3",
-    special:"images/set9special.jpg",
-    text:"Fire will devour you where innocence was taken"
+    images: [
+        "images/set9trans1.jpg",
+        "images/set9trans2.jpg",
+        "images/set9trans3.jpg",
+        "images/set9trans4.jpg",
+        "images/set9final.jpg"
+    ],
+    audio: "audio/audio9.mp3",
+    special: "images/set9special.jpg"
 };
 
-const transitions = set9.images;
-const audioSrc = set9.audio;
-const finalText = set9.text;
 let loadedImages = [];
-
 const temp = document.createElement('canvas');
 const tctx = temp.getContext('2d');
-temp.width = canvas.width;
-temp.height = canvas.height;
+temp.width = canvas.width; temp.height = canvas.height;
 
-// --- Préchargement images ---
+let clickCount = 0;
+const maxClicks = 47;
+let ratio = 0;
+let finalMode = false;
+let specialVisible = false;
+
+const audioElement = document.getElementById('audio');
+audioElement.src = set9.audio;
+
+// Préchargement images
 async function preloadImages(sources){
     const promises = sources.map(src => new Promise(resolve=>{
         const img = new Image();
@@ -51,177 +64,94 @@ async function preloadImages(sources){
     loadedImages = await Promise.all(promises);
 }
 
-// --- Audio ---
-const audioElement = document.getElementById('audio');
-audioElement.src = audioSrc;
-
-const finalAudioSrc = "audio/final_scream.mp3";
-
-const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-const source = audioCtx.createMediaElementSource(audioElement);
-const distortion = audioCtx.createWaveShaper();
-const filter = audioCtx.createBiquadFilter();
-const gainNode = audioCtx.createGain();
-
-source.connect(distortion);
-distortion.connect(filter);
-filter.connect(gainNode);
-gainNode.connect(audioCtx.destination);
-gainNode.gain.value = 1;
-
-function makeDistortionCurve(amount){
-    const k = amount;
-    const n = 44100;
-    const curve = new Float32Array(n);
-    const deg=Math.PI/180;
-    for(let i=0;i<n;i++){
-        const x = i*2/n-1;
-        curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
-    }
-    return curve;
-}
-
-// --- Start ---
-document.getElementById('startButton').addEventListener('click',()=>{
-    audioCtx.resume();
-    audioElement.play();
-    document.getElementById('startButton').style.display='none';
-});
-
-let clickCount=0;
-const maxClicks = 47;
-let ratio=0;
-let finalMode=false;
-let specialVisible=false;
-
-// --- Clicks ---
-document.body.addEventListener('click',()=>{
-    if(finalMode) return;
-
-    // Clic 46 : afficher set9special
-    if(clickCount===maxClicks-1 && !specialVisible){
-        showSpecialImage();
-        specialVisible=true;
-        return;
-    }
-
-    if(clickCount<maxClicks) clickCount++;
-    ratio = clickCount/maxClicks;
-
-    if(clickCount===maxClicks) activateFinalMode();
-});
-
-// --- Affichage image spéciale ---
-function showSpecialImage(){
-    audioElement.pause();
-    document.body.style.filter='none'; // supprime tous les filtres
-
-    const img = new Image();
-    img.src = set9.special;
-    img.onload = ()=>{
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(img,0,0,canvas.width,canvas.height);
-    };
-}
-
-// --- Crash final ---
-function activateFinalMode(){
-    finalMode=true;
-    audioElement.src = finalAudioSrc;
-    audioElement.loop = true;
-    audioElement.play();
-    distortion.curve = makeDistortionCurve(1500);
-
-    const ft = document.getElementById('finalText');
-    ft.innerText = finalText;
-    ft.style.display='block';
-}
-
-// --- Morphing ---
-const steps = [10,20,30,40,46];
+// Morphing
+const steps=[10,20,30,40,46];
 function getTransitionIndex(clickCount){
     for(let i=0;i<steps.length;i++){
-        if(clickCount <= steps[i]){
+        if(clickCount<=steps[i]){
             const prevIndex = i===0?0:i-1;
             const alpha = (clickCount-(i===0?0:steps[i-1]))/(steps[i]-(i===0?0:steps[i-1]));
-            return {prevIndex,nextIndex:i,alpha};
+            return {prevIndex, nextIndex:i, alpha};
         }
     }
-    return {prevIndex:transitions.length-2, nextIndex:transitions.length-1, alpha:1};
+    return {prevIndex:loadedImages.length-2, nextIndex:loadedImages.length-1, alpha:1};
 }
 
 function morphImages(ctx,img1,img2,alpha){
     tctx.clearRect(0,0,temp.width,temp.height);
-    tctx.globalAlpha = 1-alpha;
-    tctx.drawImage(img1,0,0,temp.width,temp.height);
-    tctx.globalAlpha = alpha;
-    tctx.drawImage(img2,0,0,temp.width,temp.height);
-    tctx.globalAlpha = 1;
+    tctx.globalAlpha=1-alpha; tctx.drawImage(img1,0,0,temp.width,temp.height);
+    tctx.globalAlpha=alpha; tctx.drawImage(img2,0,0,temp.width,temp.height);
+    tctx.globalAlpha=1;
     ctx.drawImage(temp,0,0,canvas.width,canvas.height);
+}
+
+// --- Glitch ---
+function drawGlitch(ratio){
+    const w=canvas.width,h=canvas.height;
+    const blockCount=Math.floor(ratio*200);
+    for(let i=0;i<blockCount;i++){
+        const bx=Math.floor(Math.random()*w);
+        const by=Math.floor(Math.random()*h);
+        const bw=Math.floor(Math.random()*30+5);
+        const bh=Math.floor(Math.random()*30+5);
+        const tempData=ctx.getImageData(bx,by,bw,bh);
+        const dx=Math.floor((Math.random()-0.5)*150*ratio);
+        const dy=Math.floor((Math.random()-0.5)*150*ratio);
+        ctx.putImageData(tempData,bx+dx,by+dy);
+    }
 }
 
 // --- Draw loop ---
 async function draw(){
-    await preloadImages(transitions);
-
+    await preloadImages(set9.images);
     function frame(){
         requestAnimationFrame(frame);
+        if(finalMode) return;
 
-        if(finalMode) return; // arrêt de draw si crash
+        if(specialVisible) return; // on ne touche plus au canvas si image spéciale visible
 
-        if(specialVisible) return; // arrêt effets si set9special visible
-
-        // Morphing
+        // Morph + glitch
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
+        drawGlitch(ratio);
 
-        // Glitch blocs
-        const w=canvas.width, h=canvas.height;
-        const blockCount=Math.floor(ratio*200);
-        for(let i=0;i<blockCount;i++){
-            const bx=Math.floor(Math.random()*w);
-            const by=Math.floor(Math.random()*h);
-            const bw=Math.floor(Math.random()*30+5);
-            const bh=Math.floor(Math.random()*30+5);
-            const tempData = ctx.getImageData(bx,by,bw,bh);
-            const dx = Math.floor((Math.random()-0.5)*150*ratio);
-            const dy = Math.floor((Math.random()-0.5)*150*ratio);
-            ctx.putImageData(tempData,bx+dx,by+dy);
-        }
+        // CSS filter
+        const contrast=1+ratio*5;
+        const saturate=1+ratio*5;
+        const hue=ratio*360;
+        document.body.style.filter=`contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-        // Fractures vibrantes
-        const fracCount = Math.floor(ratio*50);
-        const time = Date.now()*0.002;
-        for(let i=0;i<fracCount;i++){
-            const x1 = Math.floor(Math.random()*w);
-            const y1 = Math.floor(Math.random()*h);
-            const offsetX = Math.sin(time+i)*50*ratio;
-            const offsetY = Math.cos(time+i)*50*ratio;
-            const x2 = x1+Math.floor(offsetX);
-            const y2 = y1+Math.floor(offsetY);
-            ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
-            ctx.lineWidth = 1+ratio*2;
-            ctx.beginPath();
-            ctx.moveTo(x1,y1);
-            ctx.lineTo(x2,y2);
-            ctx.stroke();
-        }
-
-        // CSS filtre
-        const contrast = 1+ratio*5;
-        const saturate = 1+ratio*5;
-        const hue = ratio*360;
-        document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
-
-        // Audio distorsion + playback rate
-        distortion.curve = makeDistortionCurve(ratio*700);
-        distortion.oversample='4x';
-        filter.type='allpass';
-        filter.frequency.value = 500+Math.random()*ratio*2000;
-        audioElement.playbackRate = 1+ratio*0.8+Math.random()*0.02;
+        ratio = clickCount/maxClicks;
     }
-
     frame();
+}
+
+// --- Start button ---
+document.getElementById('startButton').addEventListener('click', ()=>{
+    audioElement.play();
+    document.getElementById('startButton').style.display='none';
+});
+
+// --- Clicks ---
+document.body.addEventListener('click', ()=>{
+    if(finalMode) return;
+
+    clickCount++;
+    if(clickCount===46 && !specialVisible){
+        showSpecialImage();
+    }
+});
+
+function showSpecialImage(){
+    audioElement.pause();
+    document.body.style.filter='none';
+    const img = new Image();
+    img.src = set9.special;
+    img.onload = ()=>{
+        specialVisible=true;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    };
 }
 
 draw();
