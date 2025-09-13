@@ -14,46 +14,6 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
   text-align:center; pointer-events:none; display:none;
   max-width: 80vw;
 }
-/* === MODALE SECRÈTE === */
-#secretModal {
-  position: fixed;
-  top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.85);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-#secretModal .modal-content {
-  background: #111;
-  border: 2px solid crimson;
-  border-radius: 12px;
-  padding: 30px 40px;
-  color: white;
-  font-family: 'Courier New', monospace;
-  font-size: 2vw;
-  text-align: center;
-  max-width: 80%;
-  box-shadow: 0 0 25px crimson;
-  animation: appear 0.5s ease-out;
-}
-#secretModal button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: crimson;
-  border: none;
-  color: white;
-  font-size: 1.2vw;
-  border-radius: 8px;
-  cursor: pointer;
-}
-#secretModal button:hover {
-  background: darkred;
-}
-@keyframes appear {
-  from {transform: scale(0.7); opacity: 0;}
-  to   {transform: scale(1); opacity: 1;}
-}
 </style>
 </head>
 <body>
@@ -62,14 +22,6 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <div id="finalText"></div>
 <audio id="audio" loop></audio>
 <button id="startButton"></button>
-
-<!-- MODALE SECRÈTE -->
-<div id="secretModal">
-  <div class="modal-content">
-    <p>🔒 CODE SECRET : <strong>9X-47Z</strong></p>
-    <button onclick="document.getElementById('secretModal').style.display='none'">Fermer</button>
-  </div>
-</div>
 
 <script>
 // --- Base HTML originel ---
@@ -88,7 +40,7 @@ const sets = [
   {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
   {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
   {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
-  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Voleur d'innocence!"}
+  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée"}
 ];
 
 // --- Choix aléatoire du set ---
@@ -155,12 +107,36 @@ document.getElementById('startButton').addEventListener('click',()=>{
 
 // --- Clicks ---
 let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
+let specialPause=false; // état pour le set9
+let unlockCode=false;   // devient vrai après 9s
 
 document.body.addEventListener('click',()=>{
   if(finalMode) return;
+
   if(clickCount<maxClicks) clickCount++;
   ratio = clickCount/maxClicks;
+
+  // Cas spécial uniquement pour set9
+  if(chosenSet===sets[8] && clickCount===maxClicks){
+    specialPause = true;
+    ratio = 1; // image finale affichée
+
+    // Timer de 9s avant d'activer le "code"
+    setTimeout(()=>{
+      unlockCode = true;
+    },9000);
+
+    return; // on bloque le flux normal tant qu'il n'y a pas d'autre action
+  }
+
   if(clickCount===maxClicks) activateFinalMode();
+});
+
+// --- Back button hack (uniquement set9 + unlock) ---
+window.addEventListener("popstate",()=>{
+  if(chosenSet===sets[8] && unlockCode){
+    alert("🔑 Code secret : 9-47-999");
+  }
 });
 
 // --- Crash final ---
@@ -205,6 +181,13 @@ async function draw(){
   await preloadImages(transitions);
   function frame(){
     requestAnimationFrame(frame);
+
+    // Cas spécial : pause au clic 47 pour set9
+    if(specialPause){
+      ctx.drawImage(loadedImages[loadedImages.length-1],0,0,canvas.width,canvas.height);
+      document.body.style.filter = "none"; // pas de glitch
+      return;
+    }
 
     if(finalMode){
       // Fond rouge + blocs glitchés
@@ -277,34 +260,6 @@ async function draw(){
 }
 
 draw();
-
-// =============================
-// AJOUT SPECIAL POUR LE SET9
-// =============================
-let secretReady = false;
-
-if (chosenSet === sets[8]) { // set9 uniquement
-  document.body.addEventListener('click', () => {
-    if (clickCount === maxClicks) {
-      // Au clic 47, attendre 9s
-      setTimeout(() => {
-        secretReady = true;
-        // On ajoute un faux état d'historique
-        history.pushState({secret:true}, "", window.location.href + "#secret");
-      }, 9000);
-    }
-  });
-
-  // Interception du "Précédent"
-  window.addEventListener("popstate", (event) => {
-    if (secretReady && event.state && event.state.secret) {
-      event.preventDefault();
-      document.getElementById("secretModal").style.display = "flex";
-      // On réinsère un état pour pouvoir recommencer
-      history.pushState({secret:true}, "", window.location.href + "#secret");
-    }
-  });
-}
 </script>
 
 </body>
