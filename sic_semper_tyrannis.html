@@ -2,68 +2,224 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Test Set9 Special</title>
+<title>l'antre du voleur d'innocence</title>
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; display:none; cursor:pointer;}
+#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:20; display:none; cursor:pointer;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
+#finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
 <img id="set9special" src="images/set9special.jpg">
-<button id="startButton">Start</button>
+<div id="finalText"></div>
+<audio id="audio" loop></audio>
+<button id="startButton"></button>
 
 <script>
+// --- Base ---
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// --- Sets ---
 const sets = [
-    {images:["images/set1trans1.jpg","images/set1final.jpg"], audio:"audio/audio1.mp3"},
-    {images:["images/set9trans1.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3"}
+  {images:["images/set1trans1.jpg","images/set1trans2.jpg","images/set1trans3.jpg","images/set1trans4.jpg","images/set1final.jpg"], audio:"audio/audio1.mp3", text:"innocence brisée"},
+  {images:["images/set2trans1.jpg","images/set2trans2.jpg","images/set2trans3.jpg","images/set2trans4.jpg","images/set2final.jpg"], audio:"audio/audio2.mp3", text:"innocence brisée"},
+  {images:["images/set3trans1.jpg","images/set3trans2.jpg","images/set3trans3.jpg","images/set3trans4.jpg","images/set3final.jpg"], audio:"audio/audio3.mp3", text:"innocence brisée"},
+  {images:["images/set4trans1.jpg","images/set4trans2.jpg","images/set4trans3.jpg","images/set4trans4.jpg","images/set4final.jpg"], audio:"audio/audio4.mp3", text:"innocence brisée"},
+  {images:["images/set5trans1.jpg","images/set5trans2.jpg","images/set5trans3.jpg","images/set5trans4.jpg","images/set5final.jpg"], audio:"audio/audio5.mp3", text:"innocence brisée"},
+  {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
+  {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
+  {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
+  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée"}
 ];
 
-const chosenSet = sets[1]; // Test set9
+// --- Choix aléatoire ---
+const chosenSet = sets[Math.floor(Math.random()*sets.length)];
 const transitions = chosenSet.images;
+const audioSrc = chosenSet.audio;
+const finalText = chosenSet.text;
 
+// --- Préchargement images ---
 let loadedImages = [];
+const temp = document.createElement('canvas');
+const tctx = temp.getContext('2d');
+temp.width = canvas.width;
+temp.height = canvas.height;
 async function preloadImages(sources){
-    const promises = sources.map(src => new Promise(resolve=>{
-        const img = new Image();
-        img.src = src;
-        img.onload = ()=>resolve(img);
-        img.onerror = ()=>resolve(img);
-        loadedImages.push(img);
-    }));
-    await Promise.all(promises);
+  const promises = sources.map(src => new Promise(resolve => {
+    const img = new Image();
+    img.src = src;
+    img.crossOrigin = "anonymous";
+    img.onload = ()=>resolve(img);
+    img.onerror = ()=>resolve(img);
+  }));
+  loadedImages = await Promise.all(promises);
 }
 
-let clickCount = 0;
-const maxClicks = 2;
-let set9SpecialShown = false;
+// --- Audio ---
+const audioElement = document.getElementById('audio');
+audioElement.src = audioSrc;
+const finalAudioSrc = "audio/final_scream.mp3";
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+const source = audioCtx.createMediaElementSource(audioElement);
+const distortion = audioCtx.createWaveShaper();
+const filter = audioCtx.createBiquadFilter();
+const gainNode = audioCtx.createGain();
+const analyser = audioCtx.createAnalyser();
+source.connect(distortion);
+distortion.connect(filter);
+filter.connect(gainNode);
+gainNode.connect(analyser);
+analyser.connect(audioCtx.destination);
+gainNode.gain.value = 1;
+analyser.fftSize = 256;
 
-document.body.addEventListener('click',()=>{
-    clickCount++;
-    if(chosenSet === sets[1] && clickCount === 1 && !set9SpecialShown){
-        set9SpecialShown = true;
-        document.getElementById('set9special').style.display='block';
-    }
+function makeDistortionCurve(amount){
+  const k = amount; const n = 44100; const curve = new Float32Array(n); const deg=Math.PI/180;
+  for(let i=0;i<n;i++){
+    const x = i*2/n-1;
+    curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
+  }
+  return curve;
+}
+
+// --- Start ---
+document.getElementById('startButton').addEventListener('click',()=>{
+  audioCtx.resume();
+  audioElement.play();
+  document.getElementById('startButton').style.display='none';
 });
 
-async function draw(){
-    await preloadImages(transitions);
-    function frame(){
-        requestAnimationFrame(frame);
+// --- Clicks ---
+let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
+let set9SpecialShown=false;
 
-        if(set9SpecialShown) return; // overlay visible, cache tout
+document.body.addEventListener('click',()=>{
+  if(finalMode) return;
 
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(loadedImages[0],0,0,canvas.width,canvas.height);
+  // Set 9 special
+  if(chosenSet === sets[8] && clickCount === maxClicks-1 && !set9SpecialShown){
+    set9SpecialShown=true;
+    const specialImg = document.getElementById('set9special');
+    specialImg.style.display='block';
+    audioElement.pause();
+
+    specialImg.onclick = ()=>activateFinalMode(); // clic sur image déclenche crash
+    return;
+  }
+
+  if(clickCount<maxClicks) clickCount++;
+  ratio = clickCount/maxClicks;
+  if(clickCount===maxClicks) activateFinalMode();
+});
+
+// --- Crash final ---
+function activateFinalMode(){
+  finalMode=true;
+  audioElement.pause();
+  audioElement.src = finalAudioSrc;
+  audioElement.loop=true;
+  audioElement.play();
+  distortion.curve = makeDistortionCurve(1500);
+  const ft = document.getElementById('finalText');
+  ft.innerText = finalText;
+  ft.style.display='block';
+}
+
+// --- Morphing ---
+const steps=[10,20,30,40,47];
+function getTransitionIndex(clickCount){
+  for(let i=0;i<steps.length;i++){
+    if(clickCount<=steps[i]){
+      const prevIndex = i===0?0:i-1;
+      const alpha = (clickCount-(i===0?0:steps[i-1])) / (steps[i]-(i===0?0:steps[i-1]));
+      return {prevIndex, nextIndex:i, alpha};
     }
-    frame();
+  }
+  return {prevIndex:transitions.length-2, nextIndex:transitions.length-1, alpha:1};
+}
+function morphImages(ctx,img1,img2,alpha){
+  tctx.clearRect(0,0,temp.width,temp.height);
+  tctx.globalAlpha = 1-alpha;
+  tctx.drawImage(img1,0,0,temp.width,temp.height);
+  tctx.globalAlpha = alpha;
+  tctx.drawImage(img2,0,0,temp.width,temp.height);
+  tctx.globalAlpha=1;
+  ctx.drawImage(temp,0,0,canvas.width,canvas.height);
+}
+
+// --- Draw ---
+async function draw(){
+  await preloadImages(transitions);
+  function frame(){
+    requestAnimationFrame(frame);
+
+    if(finalMode){
+      const w=canvas.width, h=canvas.height;
+      ctx.clearRect(0,0,w,h);
+      for(let i=0;i<500;i++){
+        const x=Math.floor(Math.random()*w);
+        const y=Math.floor(Math.random()*h);
+        const bw=Math.floor(Math.random()*50+10);
+        const bh=Math.floor(Math.random()*50+10);
+        ctx.fillStyle=`rgba(255,0,0,${Math.random()*0.6+0.2})`;
+        ctx.fillRect(x,y,bw,bh);
+      }
+      return;
+    }
+
+    if(set9SpecialShown) return; // cache draw derrière image spéciale
+
+    const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
+    morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
+
+    // Glitch
+    const w=canvas.width, h=canvas.height;
+    for(let i=0;i<Math.floor(ratio*200);i++){
+      const bx=Math.floor(Math.random()*w);
+      const by=Math.floor(Math.random()*h);
+      const bw=Math.floor(Math.random()*30+5);
+      const bh=Math.floor(Math.random()*30+5);
+      const tempData=ctx.getImageData(bx,by,bw,bh);
+      const dx=Math.floor((Math.random()-0.5)*150*ratio);
+      const dy=Math.floor((Math.random()-0.5)*150*ratio);
+      ctx.putImageData(tempData,bx+dx,by+dy);
+    }
+
+    // Fractures vibrantes
+    const fracCount = Math.floor(ratio*50);
+    const time = Date.now()*0.002;
+    for(let i=0;i<fracCount;i++){
+      const x1=Math.floor(Math.random()*w);
+      const y1=Math.floor(Math.random()*h);
+      const offsetX=Math.sin(time+i)*50*ratio;
+      const offsetY=Math.cos(time+i)*50*ratio;
+      const x2=x1+Math.floor(offsetX);
+      const y2=y1+Math.floor(offsetY);
+      ctx.strokeStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+      ctx.lineWidth=1+ratio*2;
+      ctx.beginPath();
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(x2,y2);
+      ctx.stroke();
+    }
+
+    // Filtre CSS
+    document.body.style.filter=`contrast(${1+ratio*5}) saturate(${1+ratio*5}) hue-rotate(${ratio*360}deg)`;
+
+    // Audio distorsion + rate
+    distortion.curve = makeDistortionCurve(ratio*700);
+    distortion.oversample='4x';
+    filter.type='allpass';
+    filter.frequency.value = 500 + Math.random()*ratio*2000;
+    audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
+  }
+  frame();
 }
 draw();
 </script>
