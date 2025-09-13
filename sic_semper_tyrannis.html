@@ -68,7 +68,6 @@
     const distortion = audioCtx.createWaveShaper();
     const filter = audioCtx.createBiquadFilter();
     const gainNode = audioCtx.createGain();
-    const analyser = document.createElement('AnalyserNode');
     source.connect(distortion);
     distortion.connect(filter);
     filter.connect(gainNode);
@@ -115,7 +114,6 @@
     });
 
     function showSpecialImage(){
-      // Affiche l'image spéciale
       const img = new Image();
       img.src="images/set9special.jpg";
       img.onload = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
@@ -125,7 +123,7 @@
       audioCtx.suspend();
 
       // Timer 9 secondes pour activer le code secret
-      setTimeout(()=>{ specialTimer=true; },9000);
+      setTimeout(()=>{ specialTimer=true; },5000);
     }
 
     function activateFinalMode(){
@@ -166,7 +164,7 @@
       await preloadImages(transitions);
       function frame(){
         requestAnimationFrame(frame);
-        if(finalMode) {
+        if(finalMode){
           const w=canvas.width,h=canvas.height;
           ctx.clearRect(0,0,w,h);
           const blockCount=500;
@@ -181,7 +179,7 @@
           return;
         }
 
-        // --- Si image spéciale set9, ne rien faire ---
+        // --- Si image spéciale set9, ne rien faire du tout ---
         if(specialImage) return;
 
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
@@ -232,12 +230,12 @@
     }
     draw();
 
-    // --- Code secret via "précédent" uniquement après 9s sur image spéciale ---
+    // --- Code secret via "précédent" uniquement après 5s sur image spéciale ---
     if(chosenSet===sets[8]){
       history.pushState({page:"main"},"");
       window.addEventListener("popstate",(event)=>{
         if(specialImage && specialTimer){
-          alert("CODE SECRET : 9X-47Z");
+          alert("14062005");
           history.pushState({page:"main"},"");
         }
       });
