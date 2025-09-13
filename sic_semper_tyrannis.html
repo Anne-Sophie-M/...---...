@@ -111,6 +111,7 @@
 
     let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
     let specialImage=false, specialTimer=false, hasLost=false;
+    let specialImgElement=null;
 
     document.body.addEventListener('click',()=>{
       if(finalMode) return;
@@ -135,11 +136,11 @@
     });
 
     function showSpecialImage(){
-      const img = new Image();
-      img.src="images/set9special.jpg";
-      img.onload = ()=>{
+      specialImgElement = new Image();
+      specialImgElement.src="images/set9special.jpg";
+      specialImgElement.onload = ()=>{
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        ctx.drawImage(specialImgElement,0,0,canvas.width,canvas.height);
       };
       // Supprime tout effet visuel
       document.body.style.filter = "none";
@@ -189,6 +190,7 @@
       function frame(){
         requestAnimationFrame(frame);
 
+        // Cas crash final
         if(finalMode){
           const w=canvas.width,h=canvas.height;
           ctx.clearRect(0,0,w,h);
@@ -204,9 +206,14 @@
           return;
         }
 
-        // Si image spéciale set9 → ne rien dessiner
-        if(specialImage) return;
+        // Cas image spéciale (affichée en continu)
+        if(specialImage && specialImgElement){
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          ctx.drawImage(specialImgElement,0,0,canvas.width,canvas.height);
+          return;
+        }
 
+        // Transition normale
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
