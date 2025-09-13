@@ -6,7 +6,7 @@
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:100; display:none; cursor:pointer;}
+#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:20; display:none; cursor:pointer;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
 #finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
 </style>
@@ -97,45 +97,44 @@ document.getElementById('startButton').addEventListener('click',()=>{
 });
 
 // --- Clicks ---
-let clickCount=0, ratio=0, finalMode=false;
-let set9SpecialShown = false, codeRevealed = false;
-const specialImg = document.getElementById('set9special');
+let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
+let set9SpecialShown = false;
+let codeRevealed = false;
 
 document.body.addEventListener('click',()=>{
     if(finalMode) return;
 
-    // --- Set9 special logic ---
-    if(chosenSet === sets[8] && clickCount === 46 && !set9SpecialShown){
+    // Set 9 special image logic
+    if(chosenSet === sets[8] && clickCount === maxClicks-1 && !set9SpecialShown){
         set9SpecialShown = true;
+        const specialImg = document.getElementById('set9special');
         specialImg.style.display = 'block';
         audioElement.pause();
 
-        // Clic sur image spéciale
-        specialImg.onclick = () => {
-            if(!codeRevealed){
-                activateFinalMode(); // Crash final
-            } else {
-                history.back(); // Après code révélé
-            }
+        // Gestion clic sur l'image spéciale
+        specialImg.onclick = ()=>{
+            activateFinalMode(); // Toujours crash si clique sur l'image
         };
 
-        // Pop-up code après clic sur "Précédent" et 9s
+        // Gestion pop-up code après 9s + clic sur Précédent
         setTimeout(()=>{
-            window.addEventListener('popstate', () => {
+            window.addEventListener('popstate', ()=>{
                 if(!codeRevealed){
                     alert("14062025");
                     codeRevealed = true;
+                    // Après code, clic sur image simule history.back
+                    specialImg.onclick = ()=>{ history.back(); };
                 }
             }, {once:true});
         },9000);
 
-        return; // bloque progression normale ce tour
+        return; // Bloque le click normal pour ce tour
     }
 
-    // --- Normal click progression ---
-    if(clickCount < 47) clickCount++;
-    ratio = clickCount/47;
-    if(clickCount === 47) activateFinalMode();
+    // Normal click progression
+    if(clickCount < maxClicks) clickCount++;
+    ratio = clickCount/maxClicks;
+    if(clickCount===maxClicks) activateFinalMode();
 });
 
 // --- Crash final ---
@@ -196,9 +195,10 @@ async function draw(){
             return;
         }
 
-        if(set9SpecialShown) return; // overlay bloque rendu du canvas
+        // Skip rendering if set9 special is shown
+        if(set9SpecialShown) return;
 
-        // Morphing
+        // Pixelisation morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
@@ -241,7 +241,7 @@ async function draw(){
         const hue = ratio*360;
         document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-        // Audio
+        // Audio distorsion + playback rate
         distortion.curve = makeDistortionCurve(ratio*700);
         distortion.oversample='4x';
         filter.type='allpass';
