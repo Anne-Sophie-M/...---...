@@ -24,11 +24,13 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <button id="startButton"></button>
 
 <script>
+// --- Base HTML originel ---
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// --- Définition des 9 sets ---
 const sets = [
   {images:["images/set1trans1.jpg","images/set1trans2.jpg","images/set1trans3.jpg","images/set1trans4.jpg","images/set1final.jpg"], audio:"audio/audio1.mp3", text:"innocence brisée"},
   {images:["images/set2trans1.jpg","images/set2trans2.jpg","images/set2trans3.jpg","images/set2trans4.jpg","images/set2final.jpg"], audio:"audio/audio2.mp3", text:"innocence brisée"},
@@ -38,14 +40,16 @@ const sets = [
   {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
   {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
   {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
-  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Fire will devour you where innocence was taken - Le feu te dévorera là où tu as pris leur innocence."}
-    ];
+  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée"}
+];
 
+// --- Choix aléatoire du set ---
 const chosenSet = sets[Math.floor(Math.random()*sets.length)];
 const transitions = chosenSet.images;
 const audioSrc = chosenSet.audio;
 const finalText = chosenSet.text;
 
+// --- Préchargement des images ---
 let loadedImages = [];
 const temp = document.createElement('canvas');
 const tctx = temp.getContext('2d');
@@ -53,16 +57,17 @@ temp.width = canvas.width;
 temp.height = canvas.height;
 
 async function preloadImages(sources){
-  const promises = sources.map(src => new Promise(resolve => {
+  const promises = sources.map(src => new Promise(resolve=>{
     const img = new Image();
     img.src = src;
     img.crossOrigin = "anonymous";
-    img.onload = ()=>resolve(img);
-    img.onerror = ()=>resolve(img);
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(img);
   }));
   loadedImages = await Promise.all(promises);
 }
 
+// --- Audio ---
 const audioElement = document.getElementById('audio');
 audioElement.src = audioSrc;
 const finalAudioSrc = "audio/final_scream.mp3";
@@ -78,8 +83,7 @@ gainNode.connect(audioCtx.destination);
 gainNode.gain.value = 1;
 
 function makeDistortionCurve(amount){
-  const k = amount;
-  const n = 44100;
+  const k = amount; const n = 44100;
   const curve = new Float32Array(n);
   const deg=Math.PI/180;
   for(let i=0;i<n;i++){
@@ -89,12 +93,14 @@ function makeDistortionCurve(amount){
   return curve;
 }
 
+// --- Start button ---
 document.getElementById('startButton').addEventListener('click',()=>{
   audioCtx.resume();
   audioElement.play();
   document.getElementById('startButton').style.display='none';
 });
 
+// --- Clicks ---
 let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
 let specialImage=false, specialTimer=false;
 
@@ -102,7 +108,7 @@ let specialImage=false, specialTimer=false;
 document.body.addEventListener('click',()=>{
   if(finalMode) return;
 
-  // --- Cas spécial set9 avant crash ---
+  // --- Cas spécial set9 juste avant crash ---
   if(chosenSet===sets[8] && clickCount===maxClicks-1 && !specialImage){
     showSpecialImage();
     specialImage=true;
@@ -122,14 +128,17 @@ document.body.addEventListener('click',()=>{
 function showSpecialImage(){
   const img = new Image();
   img.src="images/set9special.jpg";
-  img.onload = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
+  img.onload=()=>{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  };
 
   // Silence total
   audioElement.pause();
   audioCtx.suspend();
 
   // Timer 9s pour activer le code secret
-  setTimeout(()=>{ specialTimer=true; },5000);
+  setTimeout(()=>{ specialTimer=true; },9000);
 }
 
 // --- Final crash ---
@@ -145,26 +154,26 @@ function activateFinalMode(){
   ft.style.display='block';
 }
 
-// --- Morphing ---
+// --- Morphing progressif ---
 const steps=[10,20,30,40,47];
 function getTransitionIndex(clickCount){
   for(let i=0;i<steps.length;i++){
     if(clickCount<=steps[i]){
-      const prevIndex = i===0?0:i-1;
-      const alpha = (clickCount-(i===0?0:steps[i-1]))/(steps[i]-(i===0?0:steps[i-1]));
+      const prevIndex=i===0?0:i-1;
+      const alpha=(clickCount-(i===0?0:steps[i-1]))/(steps[i]-(i===0?0:steps[i-1]));
       return {prevIndex,nextIndex:i,alpha};
     }
   }
-  return {prevIndex:transitions.length-2, nextIndex:transitions.length-1, alpha:1};
+  return {prevIndex:transitions.length-2,nextIndex:transitions.length-1,alpha:1};
 }
 
 function morphImages(ctx,img1,img2,alpha){
   tctx.clearRect(0,0,temp.width,temp.height);
-  tctx.globalAlpha=1-alpha;
+  tctx.globalAlpha = 1-alpha;
   tctx.drawImage(img1,0,0,temp.width,temp.height);
-  tctx.globalAlpha=alpha;
+  tctx.globalAlpha = alpha;
   tctx.drawImage(img2,0,0,temp.width,temp.height);
-  tctx.globalAlpha=1;
+  tctx.globalAlpha = 1;
   ctx.drawImage(temp,0,0,canvas.width,canvas.height);
 }
 
@@ -175,10 +184,10 @@ async function draw(){
     requestAnimationFrame(frame);
 
     if(finalMode){
+      // Fond rouge + blocs glitchés
       const w=canvas.width,h=canvas.height;
       ctx.clearRect(0,0,w,h);
-      const blockCount=500;
-      for(let i=0;i<blockCount;i++){
+      for(let i=0;i<500;i++){
         const x=Math.floor(Math.random()*w);
         const y=Math.floor(Math.random()*h);
         const bw=Math.floor(Math.random()*50+10);
@@ -189,7 +198,7 @@ async function draw(){
       return;
     }
 
-    if(!specialImage){ // Effets seulement si pas image spéciale
+    if(!specialImage){ // --- Effets normaux uniquement si pas image spéciale ---
       const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
       morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
@@ -204,23 +213,23 @@ async function draw(){
         const dx=Math.floor((Math.random()-0.5)*150*ratio);
         const dy=Math.floor((Math.random()-0.5)*150*ratio);
         ctx.putImageData(tempData,bx+dx,by+dy);
+      }
 
-        const fracCount=Math.floor(ratio*50);
-        const time=Date.now()*0.002;
-        for(let j=0;j<fracCount;j++){
-          const x1=Math.floor(Math.random()*w);
-          const y1=Math.floor(Math.random()*h);
-          const offsetX=Math.sin(time+j)*50*ratio;
-          const offsetY=Math.cos(time+j)*50*ratio;
-          const x2=x1+Math.floor(offsetX);
-          const y2=y1+Math.floor(offsetY);
-          ctx.strokeStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
-          ctx.lineWidth=1+ratio*2;
-          ctx.beginPath();
-          ctx.moveTo(x1,y1);
-          ctx.lineTo(x2,y2);
-          ctx.stroke();
-        }
+      const fracCount=Math.floor(ratio*50);
+      const time=Date.now()*0.002;
+      for(let i=0;i<fracCount;i++){
+        const x1=Math.floor(Math.random()*w);
+        const y1=Math.floor(Math.random()*h);
+        const offsetX=Math.sin(time+i)*50*ratio;
+        const offsetY=Math.cos(time+i)*50*ratio;
+        const x2=x1+Math.floor(offsetX);
+        const y2=y1+Math.floor(offsetY);
+        ctx.strokeStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+        ctx.lineWidth=1+ratio*2;
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
       }
 
       const contrast=1+ratio*5;
@@ -244,12 +253,13 @@ draw();
 if(chosenSet===sets[8]){
   history.pushState({page:"main"},"");
   window.addEventListener("popstate",(event)=>{
-    if(specialImage && specialTimer){
-      alert("C9X-47Z");
+    if(specialImage && specialTimer){ // uniquement après 9s sur set9special
+      alert("CODE SECRET : 9X-47Z");
       history.pushState({page:"main"},"");
     }
   });
 }
 </script>
+
 </body>
 </html>
