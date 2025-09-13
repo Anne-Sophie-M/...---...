@@ -40,8 +40,9 @@ const sets = [
   {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
   {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
   {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
-  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée"}
+  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg","images/set9special.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée"}
 ];
+// ↑ Pour le set9, on ajoute une 6ème image "set9special.jpg"
 
 // --- Choix aléatoire du set ---
 const chosenSet = sets[Math.floor(Math.random()*sets.length)];
@@ -107,8 +108,8 @@ document.getElementById('startButton').addEventListener('click',()=>{
 
 // --- Clicks ---
 let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
-let specialPause=false; // état pour le set9
-let unlockCode=false;   // devient vrai après 9s
+let specialImage=false;
+let unlockCode=false;
 
 document.body.addEventListener('click',()=>{
   if(finalMode) return;
@@ -116,17 +117,20 @@ document.body.addEventListener('click',()=>{
   if(clickCount<maxClicks) clickCount++;
   ratio = clickCount/maxClicks;
 
-  // Cas spécial uniquement pour set9
+  // Cas spécial uniquement pour set9 et clic 47
   if(chosenSet===sets[8] && clickCount===maxClicks){
-    specialPause = true;
-    ratio = 1; // image finale affichée
+    specialImage = true;
 
-    // Timer de 9s avant d'activer le "code"
-    setTimeout(()=>{
-      unlockCode = true;
-    },9000);
+    // Après 9 secondes sans action -> autoriser code via "Précédent"
+    setTimeout(()=>{ unlockCode = true; },9000);
 
-    return; // on bloque le flux normal tant qu'il n'y a pas d'autre action
+    return; // on ne lance pas le crash direct
+  }
+
+  // Si on clique après avoir affiché l'image spéciale -> crash normal
+  if(specialImage){
+    activateFinalMode();
+    return;
   }
 
   if(clickCount===maxClicks) activateFinalMode();
@@ -182,10 +186,10 @@ async function draw(){
   function frame(){
     requestAnimationFrame(frame);
 
-    // Cas spécial : pause au clic 47 pour set9
-    if(specialPause){
+    if(specialImage){
+      // Affiche uniquement l'image spéciale (pas de glitch ni filtre)
       ctx.drawImage(loadedImages[loadedImages.length-1],0,0,canvas.width,canvas.height);
-      document.body.style.filter = "none"; // pas de glitch
+      document.body.style.filter = "none";
       return;
     }
 
