@@ -21,13 +21,11 @@
   <button id="startButton"></button>
 
   <script>
-    // --- Base HTML originel ---
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // --- Définition des 9 sets ---
     const sets = [
       {images:["images/set1trans1.jpg","images/set1trans2.jpg","images/set1trans3.jpg","images/set1trans4.jpg","images/set1final.jpg"], audio:"audio/audio1.mp3", text:"innocence brisée"},
       {images:["images/set2trans1.jpg","images/set2trans2.jpg","images/set2trans3.jpg","images/set2trans4.jpg","images/set2final.jpg"], audio:"audio/audio2.mp3", text:"innocence brisée"},
@@ -40,13 +38,11 @@
       {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Fire will devour you where innocence was taken - Le feu te dévorera là où tu as pris leur innocence."}
     ];
 
-    // --- Choix aléatoire du set ---
     const chosenSet = sets[Math.floor(Math.random()*sets.length)];
     const transitions = chosenSet.images;
     const audioSrc = chosenSet.audio;
     const finalText = chosenSet.text;
 
-    // --- Préchargement des images ---
     let loadedImages = [];
     const temp = document.createElement('canvas');
     const tctx = temp.getContext('2d');
@@ -64,7 +60,6 @@
       loadedImages = await Promise.all(promises);
     }
 
-    // --- Audio ---
     const audioElement = document.getElementById('audio');
     audioElement.src = audioSrc;
     const finalAudioSrc = "audio/final_scream.mp3";
@@ -73,15 +68,12 @@
     const distortion = audioCtx.createWaveShaper();
     const filter = audioCtx.createBiquadFilter();
     const gainNode = audioCtx.createGain();
-    const analyser = audioCtx.createAnalyser();
+    const analyser = document.createElement('AnalyserNode');
     source.connect(distortion);
     distortion.connect(filter);
     filter.connect(gainNode);
-    gainNode.connect(analyser);
-    analyser.connect(audioCtx.destination);
+    gainNode.connect(audioCtx.destination);
     gainNode.gain.value = 1;
-    analyser.fftSize = 256;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     function makeDistortionCurve(amount){
       const k = amount;
@@ -95,78 +87,66 @@
       return curve;
     }
 
-    // --- Start button ---
     document.getElementById('startButton').addEventListener('click',()=>{
       audioCtx.resume();
       audioElement.play();
       document.getElementById('startButton').style.display='none';
     });
 
-    // --- Variables ---
     let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
 
-    // Cas spécial set9
-    let specialImageShown=false;
+    // --- Set9 spécial ---
+    let specialImage=false;
     let specialTimer=false;
 
-    // --- Clicks ---
     document.body.addEventListener('click',()=>{
       if(finalMode) return;
 
-      // Cas spécial set9 : clic 46 => image spéciale silencieuse
-      if(chosenSet===sets[8] && clickCount===maxClicks-1 && !specialImageShown){
+      // --- Cas set9 avant crash ---
+      if(chosenSet===sets[8] && clickCount===maxClicks-1 && !specialImage){
         showSpecialImage();
-        specialImageShown=true;
+        specialImage=true;
         return;
       }
 
       if(clickCount<maxClicks) clickCount++;
       ratio = clickCount/maxClicks;
-
-      if(clickCount===maxClicks){
-        activateFinalMode();
-      }
+      if(clickCount===maxClicks) activateFinalMode();
     });
 
-    // --- Image spéciale set9 ---
     function showSpecialImage(){
+      // Affiche l'image spéciale
       const img = new Image();
-      img.src = "images/set9special.jpg";
-      img.onload = ()=>{
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(img,0,0,canvas.width,canvas.height);
-      };
+      img.src="images/set9special.jpg";
+      img.onload = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
 
-      // silence
+      // Silence total
       audioElement.pause();
       audioCtx.suspend();
 
-      // timer 9s
+      // Timer 9 secondes pour activer le code secret
       setTimeout(()=>{ specialTimer=true; },9000);
     }
 
-    // --- Crash final ---
     function activateFinalMode(){
-      finalMode = true;
+      finalMode=true;
       audioCtx.resume();
-      audioElement.pause();
-      audioElement.src = finalAudioSrc;
-      audioElement.loop = true;
+      audioElement.src=finalAudioSrc;
+      audioElement.loop=true;
       audioElement.play();
       distortion.curve = makeDistortionCurve(1500);
       const ft = document.getElementById('finalText');
       ft.innerText = finalText;
-      ft.style.display = 'block';
+      ft.style.display='block';
     }
 
-    // --- Morphing progressif ---
-    const steps = [10,20,30,40,47];
+    const steps=[10,20,30,40,47];
     function getTransitionIndex(clickCount){
       for(let i=0;i<steps.length;i++){
-        if(clickCount <= steps[i]){
+        if(clickCount<=steps[i]){
           const prevIndex = i===0?0:i-1;
-          const alpha = (clickCount-(i===0?0:steps[i-1])) / (steps[i]-(i===0?0:steps[i-1]));
-          return {prevIndex, nextIndex:i, alpha};
+          const alpha = (clickCount-(i===0?0:steps[i-1]))/(steps[i]-(i===0?0:steps[i-1]));
+          return {prevIndex,nextIndex:i,alpha};
         }
       }
       return {prevIndex:transitions.length-2, nextIndex:transitions.length-1, alpha:1};
@@ -174,101 +154,89 @@
 
     function morphImages(ctx,img1,img2,alpha){
       tctx.clearRect(0,0,temp.width,temp.height);
-      tctx.globalAlpha = 1-alpha;
+      tctx.globalAlpha=1-alpha;
       tctx.drawImage(img1,0,0,temp.width,temp.height);
-      tctx.globalAlpha = alpha;
+      tctx.globalAlpha=alpha;
       tctx.drawImage(img2,0,0,temp.width,temp.height);
-      tctx.globalAlpha = 1;
+      tctx.globalAlpha=1;
       ctx.drawImage(temp,0,0,canvas.width,canvas.height);
     }
 
-    // --- Draw loop ---
     async function draw(){
       await preloadImages(transitions);
       function frame(){
         requestAnimationFrame(frame);
-
-        // Crash final
-        if(finalMode){
-          const w = canvas.width;
-          const h = canvas.height;
+        if(finalMode) {
+          const w=canvas.width,h=canvas.height;
           ctx.clearRect(0,0,w,h);
-          const blockCount = 500;
+          const blockCount=500;
           for(let i=0;i<blockCount;i++){
             const x=Math.floor(Math.random()*w);
             const y=Math.floor(Math.random()*h);
             const bw=Math.floor(Math.random()*50+10);
             const bh=Math.floor(Math.random()*50+10);
-            ctx.fillStyle = `rgba(255,0,0,${Math.random()*0.6+0.2})`;
+            ctx.fillStyle=`rgba(255,0,0,${Math.random()*0.6+0.2})`;
             ctx.fillRect(x,y,bw,bh);
           }
           return;
         }
 
-        // Si image spéciale set9 : pas de glitch
-        if(specialImageShown && !finalMode){
-          return;
-        }
+        // --- Si image spéciale set9, ne rien faire ---
+        if(specialImage) return;
 
-        // Pixelisation morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
-        // Glitch blocs
-        const w = canvas.width;
-        const h = canvas.height;
-        const blockCount = Math.floor(ratio*200);
+        const w=canvas.width,h=canvas.height;
+        const blockCount=Math.floor(ratio*200);
         for(let i=0;i<blockCount;i++){
-          const bx = Math.floor(Math.random()*w);
-          const by = Math.floor(Math.random()*h);
-          const bw = Math.floor(Math.random()*30+5);
-          const bh = Math.floor(Math.random()*30+5);
-          const tempData = ctx.getImageData(bx,by,bw,bh);
-          const dx = Math.floor((Math.random()-0.5)*150*ratio);
-          const dy = Math.floor((Math.random()-0.5)*150*ratio);
+          const bx=Math.floor(Math.random()*w);
+          const by=Math.floor(Math.random()*h);
+          const bw=Math.floor(Math.random()*30+5);
+          const bh=Math.floor(Math.random()*30+5);
+          const tempData=ctx.getImageData(bx,by,bw,bh);
+          const dx=Math.floor((Math.random()-0.5)*150*ratio);
+          const dy=Math.floor((Math.random()-0.5)*150*ratio);
           ctx.putImageData(tempData,bx+dx,by+dy);
         }
 
-        // Fractures vibrantes
-        const fracCount = Math.floor(ratio*50);
-        const time = Date.now()*0.002;
+        const fracCount=Math.floor(ratio*50);
+        const time=Date.now()*0.002;
         for(let i=0;i<fracCount;i++){
-          const x1 = Math.floor(Math.random()*w);
-          const y1 = Math.floor(Math.random()*h);
-          const offsetX = Math.sin(time+i)*50*ratio;
-          const offsetY = Math.cos(time+i)*50*ratio;
-          const x2 = x1 + Math.floor(offsetX);
-          const y2 = y1 + Math.floor(offsetY);
-          ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
-          ctx.lineWidth = 1 + ratio*2;
+          const x1=Math.floor(Math.random()*w);
+          const y1=Math.floor(Math.random()*h);
+          const offsetX=Math.sin(time+i)*50*ratio;
+          const offsetY=Math.cos(time+i)*50*ratio;
+          const x2=x1+Math.floor(offsetX);
+          const y2=y1+Math.floor(offsetY);
+          ctx.strokeStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+          ctx.lineWidth=1+ratio*2;
           ctx.beginPath();
           ctx.moveTo(x1,y1);
           ctx.lineTo(x2,y2);
           ctx.stroke();
         }
 
-        // CSS filtre
-        const contrast = 1 + ratio*5;
-        const saturate = 1 + ratio*5;
-        const hue = ratio*360;
-        document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
+        const contrast=1+ratio*5;
+        const saturate=1+ratio*5;
+        const hue=ratio*360;
+        document.body.style.filter=`contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-        // Audio distorsion + playback rate
-        distortion.curve = makeDistortionCurve(ratio*700);
+        distortion.curve=makeDistortionCurve(ratio*700);
         distortion.oversample='4x';
         filter.type='allpass';
-        filter.frequency.value = 500 + Math.random()*ratio*2000;
-        audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
+        filter.frequency.value=500+Math.random()*ratio*2000;
+        audioElement.playbackRate=1+ratio*0.8+Math.random()*0.02;
       }
       frame();
     }
     draw();
 
-    // --- Code secret via "précédent" ---
+    // --- Code secret via "précédent" uniquement après 9s sur image spéciale ---
     if(chosenSet===sets[8]){
       history.pushState({page:"main"},"");
       window.addEventListener("popstate",(event)=>{
-        if(specialImageShown && specialTimer){
+        if(specialImage && specialTimer){
           alert("CODE SECRET : 9X-47Z");
           history.pushState({page:"main"},"");
         }
