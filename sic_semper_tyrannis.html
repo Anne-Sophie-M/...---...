@@ -5,13 +5,14 @@
 <title>l'antre du voleur d'innocence</title>
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
-canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:20; display:none; cursor:pointer;}
+canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0;}
+#set9special {position:fixed; top:0; left:0; width:100%; height:100%; display:none; cursor:pointer; z-index:5;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
-#finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
+#finalText {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width:80vw;}
 </style>
 </head>
 <body>
+
 <canvas id="canvas"></canvas>
 <img id="set9special" src="images/set9special.jpg">
 <div id="finalText"></div>
@@ -19,13 +20,13 @@ canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover
 <button id="startButton"></button>
 
 <script>
-// --- Base ---
+// --- Base HTML originel ---
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// --- Sets ---
+// --- Définition des 9 sets ---
 const sets = [
     {images:["images/set1trans1.jpg","images/set1trans2.jpg","images/set1trans3.jpg","images/set1trans4.jpg","images/set1final.jpg"], audio:"audio/audio1.mp3", text:"innocence brisée"},
     {images:["images/set2trans1.jpg","images/set2trans2.jpg","images/set2trans3.jpg","images/set2trans4.jpg","images/set2final.jpg"], audio:"audio/audio2.mp3", text:"innocence brisée"},
@@ -35,16 +36,16 @@ const sets = [
     {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
     {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
     {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
-    {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Fire will devour you where innocence was taken"}
+    {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Fire will devour you where innocence was taken - Le feu te dévorera là où tu as pris leur innocence"}
 ];
 
-// --- Choix aléatoire ---
+// --- Choix aléatoire du set ---
 const chosenSet = sets[Math.floor(Math.random()*sets.length)];
 const transitions = chosenSet.images;
 const audioSrc = chosenSet.audio;
 const finalText = chosenSet.text;
 
-// --- Préchargement ---
+// --- Préchargement des images ---
 let loadedImages = [];
 const temp = document.createElement('canvas');
 const tctx = temp.getContext('2d');
@@ -52,7 +53,7 @@ temp.width = canvas.width;
 temp.height = canvas.height;
 
 async function preloadImages(sources){
-    const promises = sources.map(src => new Promise(resolve => {
+    const promises = sources.map(src => new Promise(resolve=>{
         const img = new Image();
         img.src = src;
         img.crossOrigin = "anonymous";
@@ -78,16 +79,6 @@ filter.connect(gainNode);
 gainNode.connect(analyser);
 analyser.connect(audioCtx.destination);
 gainNode.gain.value = 1;
-analyser.fftSize = 256;
-
-function makeDistortionCurve(amount){
-    const k = amount; const n = 44100; const curve = new Float32Array(n); const deg=Math.PI/180;
-    for(let i=0;i<n;i++){
-        const x = i*2/n-1;
-        curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
-    }
-    return curve;
-}
 
 // --- Start button ---
 document.getElementById('startButton').addEventListener('click',()=>{
@@ -97,30 +88,33 @@ document.getElementById('startButton').addEventListener('click',()=>{
 });
 
 // --- Clicks ---
-let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
-let set9SpecialShown = false;
+let clickCount = 0, maxClicks = 47, ratio = 0, finalMode = false;
+let set9specialVisible = false;
 let codeRevealed = false;
 
 document.body.addEventListener('click',()=>{
-    // Set 9 special image logic
-    if(chosenSet === sets[8] && clickCount === maxClicks-1 && !set9SpecialShown){
-        set9SpecialShown = true;
-        const specialImg = document.getElementById('set9special');
-        specialImg.style.display = 'block';
+    if(finalMode) return;
+
+    // --- Set9 special image at click 46 ---
+    if(chosenSet === sets[8] && clickCount === 46 && !set9specialVisible){
+        set9specialVisible = true;
         audioElement.pause();
 
-        // clic sur l'image spéciale → crash final
-        specialImg.onclick = ()=> {
-            activateFinalMode();
-        };
+        // Stop effects (we just skip draw)
+        return document.getElementById('set9special').style.display = 'block';
+    }
 
+    // --- Normal click progression ---
+    clickCount++;
+    ratio = clickCount/maxClicks;
+
+    // --- If set9specialVisible, handle click for crash ---
+    if(set9specialVisible){
+        activateFinalMode();
         return;
     }
 
-    // Normal click progression
-    if(!set9SpecialShown && clickCount < maxClicks) clickCount++;
-    ratio = clickCount/maxClicks;
-    if(clickCount===maxClicks) activateFinalMode();
+    if(clickCount === maxClicks) activateFinalMode();
 });
 
 // --- Crash final ---
@@ -130,13 +124,12 @@ function activateFinalMode(){
     audioElement.src = finalAudioSrc;
     audioElement.loop = true;
     audioElement.play();
-    distortion.curve = makeDistortionCurve(1500);
     const ft = document.getElementById('finalText');
     ft.innerText = finalText;
     ft.style.display = 'block';
 }
 
-// --- Morphing ---
+// --- Morphing progressif ---
 const steps = [10,20,30,40,47];
 function getTransitionIndex(clickCount){
     for(let i=0;i<steps.length;i++){
@@ -162,10 +155,11 @@ function morphImages(ctx,img1,img2,alpha){
 // --- Draw loop ---
 async function draw(){
     await preloadImages(transitions);
+
     function frame(){
         requestAnimationFrame(frame);
 
-        if(finalMode){ // Fond rouge + blocs glitchés
+        if(finalMode) {
             const w = canvas.width;
             const h = canvas.height;
             ctx.clearRect(0,0,w,h);
@@ -181,62 +175,17 @@ async function draw(){
             return;
         }
 
-        // Skip rendering if set9 special is shown
-        if(set9SpecialShown) return;
+        // Skip rendering if set9specialVisible
+        if(set9specialVisible) return;
 
-        // Pixelisation morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
-
-        // Glitch blocs
-        const w = canvas.width;
-        const h = canvas.height;
-        const blockCount = Math.floor(ratio*200);
-        for(let i=0;i<blockCount;i++){
-            const bx = Math.floor(Math.random()*w);
-            const by = Math.floor(Math.random()*h);
-            const bw = Math.floor(Math.random()*30+5);
-            const bh = Math.floor(Math.random()*30+5);
-            const tempData = ctx.getImageData(bx,by,bw,bh);
-            const dx = Math.floor((Math.random()-0.5)*150*ratio);
-            const dy = Math.floor((Math.random()-0.5)*150*ratio);
-            ctx.putImageData(tempData,bx+dx,by+dy);
-        }
-
-        // Fractures vibrantes
-        const fracCount = Math.floor(ratio*50);
-        const time = Date.now()*0.002;
-        for(let i=0;i<fracCount;i++){
-            const x1 = Math.floor(Math.random()*w);
-            const y1 = Math.floor(Math.random()*h);
-            const offsetX = Math.sin(time+i)*50*ratio;
-            const offsetY = Math.cos(time+i)*50*ratio;
-            const x2 = x1 + Math.floor(offsetX);
-            const y2 = y1 + Math.floor(offsetY);
-            ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
-            ctx.lineWidth = 1 + ratio*2;
-            ctx.beginPath();
-            ctx.moveTo(x1,y1);
-            ctx.lineTo(x2,y2);
-            ctx.stroke();
-        }
-
-        // CSS filtre
-        const contrast = 1 + ratio*5;
-        const saturate = 1 + ratio*5;
-        const hue = ratio*360;
-        document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
-
-        // Audio distorsion + playback rate
-        distortion.curve = makeDistortionCurve(ratio*700);
-        distortion.oversample='4x';
-        filter.type='allpass';
-        filter.frequency.value = 500 + Math.random()*ratio*2000;
-        audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
     }
+
     frame();
 }
 draw();
 </script>
+
 </body>
 </html>
