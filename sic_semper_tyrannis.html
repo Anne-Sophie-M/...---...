@@ -6,7 +6,7 @@
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:20; display:none; cursor:pointer;}
+#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:100; display:none; cursor:pointer;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
 #finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
 </style>
@@ -79,6 +79,7 @@ gainNode.connect(analyser);
 analyser.connect(audioCtx.destination);
 gainNode.gain.value = 1;
 analyser.fftSize = 256;
+const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
 function makeDistortionCurve(amount){
     const k = amount; const n = 44100; const curve = new Float32Array(n); const deg=Math.PI/180;
@@ -100,38 +101,41 @@ document.getElementById('startButton').addEventListener('click',()=>{
 let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
 let set9SpecialShown = false;
 let codeRevealed = false;
+const specialDelay = 9000; // 9 secondes
+const specialImg = document.getElementById('set9special');
 
 document.body.addEventListener('click',()=>{
     if(finalMode) return;
 
-    // Set 9 special image logic
+    // --- Set9 spécial ---
     if(chosenSet === sets[8] && clickCount === maxClicks-1 && !set9SpecialShown){
         set9SpecialShown = true;
-        const specialImg = document.getElementById('set9special');
         specialImg.style.display = 'block';
-        audioElement.pause();
+        audioElement.pause(); // couper le son
 
-        // Gestion clic sur l'image spéciale
+        // Clic sur l'image avant 9s → crash
         specialImg.onclick = ()=>{
-            activateFinalMode(); // Toujours crash si clique sur l'image
+            activateFinalMode();
         };
 
-        // Gestion pop-up code après 9s + clic sur Précédent
+        // Pop-up code si le joueur utilise "Précédent" après 9s
         setTimeout(()=>{
             window.addEventListener('popstate', ()=>{
                 if(!codeRevealed){
                     alert("14062025");
                     codeRevealed = true;
-                    // Après code, clic sur image simule history.back
-                    specialImg.onclick = ()=>{ history.back(); };
+                    // Après code révélé : clic sur image simule "Précédent"
+                    specialImg.onclick = ()=>{
+                        history.back();
+                    };
                 }
             }, {once:true});
-        },9000);
+        }, specialDelay);
 
-        return; // Bloque le click normal pour ce tour
+        return;
     }
 
-    // Normal click progression
+    // Progression normale
     if(clickCount < maxClicks) clickCount++;
     ratio = clickCount/maxClicks;
     if(clickCount===maxClicks) activateFinalMode();
@@ -179,7 +183,7 @@ async function draw(){
     function frame(){
         requestAnimationFrame(frame);
 
-        if(finalMode){
+        if(finalMode){ // Fond rouge + blocs glitchés
             const w = canvas.width;
             const h = canvas.height;
             ctx.clearRect(0,0,w,h);
@@ -195,8 +199,7 @@ async function draw(){
             return;
         }
 
-        // Skip rendering if set9 special is shown
-        if(set9SpecialShown) return;
+        if(set9SpecialShown) return; // Masque la boucle normale si overlay actif
 
         // Pixelisation morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
