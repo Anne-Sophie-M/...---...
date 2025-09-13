@@ -1,3 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>l'antre du voleur d'innocence</title>
+<style>
+html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
+canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
+#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:20; display:none; cursor:pointer;}
+#startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
+#finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<img id="set9special" src="images/set9special.jpg">
+<div id="finalText"></div>
+<audio id="audio" loop></audio>
+<button id="startButton"></button>
+
 <script>
 // --- Base HTML originel ---
 const canvas = document.getElementById('canvas');
@@ -99,19 +119,17 @@ document.body.addEventListener('click',()=>{
 
         // Clic sur l’image spéciale déclenche crash si code pas révélé
         specialImg.onclick = ()=>{
-            if(!codeRevealed){
-                activateFinalMode(); // crash final
-            } else {
-                history.back(); // après pop-up, clic simule précédent
-            }
+            activateFinalMode(); // crash final toujours possible
         };
 
-        // Attente 9s pour code si joueur clique sur “Précédent”
+        // 9 secondes pour que le joueur clique sur "Précédent" pour révéler le code
         setTimeout(()=>{
             window.addEventListener('popstate', ()=>{
                 if(!codeRevealed){
                     alert("14062025");
                     codeRevealed = true;
+                    // Après code révélé, clic sur image simule précédent
+                    specialImg.onclick = ()=>{ history.back(); };
                 }
             }, {once:true});
         }, 9000);
@@ -167,7 +185,7 @@ async function draw(){
     function frame(){
         requestAnimationFrame(frame);
 
-        if(finalMode){ // Fond rouge + blocs glitchés
+        if(finalMode){ 
             const w = canvas.width;
             const h = canvas.height;
             ctx.clearRect(0,0,w,h);
@@ -183,14 +201,11 @@ async function draw(){
             return;
         }
 
-        // Skip rendering if set9 special is shown
-        if(set9SpecialShown) return;
+        if(set9SpecialShown) return; // skip normal rendering
 
-        // Pixelisation morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
-        // Glitch blocs
         const w = canvas.width;
         const h = canvas.height;
         const blockCount = Math.floor(ratio*200);
@@ -205,7 +220,6 @@ async function draw(){
             ctx.putImageData(tempData,bx+dx,by+dy);
         }
 
-        // Fractures vibrantes
         const fracCount = Math.floor(ratio*50);
         const time = Date.now()*0.002;
         for(let i=0;i<fracCount;i++){
@@ -223,13 +237,11 @@ async function draw(){
             ctx.stroke();
         }
 
-        // CSS filtre
         const contrast = 1 + ratio*5;
         const saturate = 1 + ratio*5;
         const hue = ratio*360;
         document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
-        // Audio distorsion + playback rate
         distortion.curve = makeDistortionCurve(ratio*700);
         distortion.oversample='4x';
         filter.type='allpass';
@@ -240,3 +252,5 @@ async function draw(){
 }
 draw();
 </script>
+</body>
+</html>
