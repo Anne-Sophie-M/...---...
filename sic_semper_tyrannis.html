@@ -6,9 +6,13 @@
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:50; display:none; cursor:pointer;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
 #finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
+#set9special {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    z-index:50; display:none; cursor:pointer;
+    filter:none; pointer-events:auto;
+}
 </style>
 </head>
 <body>
@@ -50,7 +54,6 @@ const temp = document.createElement('canvas');
 const tctx = temp.getContext('2d');
 temp.width = canvas.width;
 temp.height = canvas.height;
-
 async function preloadImages(sources){
     const promises = sources.map(src => new Promise(resolve => {
         const img = new Image();
@@ -101,30 +104,38 @@ let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
 let set9SpecialShown = false;
 let codeRevealed = false;
 
+const specialImg = document.getElementById('set9special');
+
 document.body.addEventListener('click',()=>{
     if(finalMode) return;
 
-    // Set 9 special image logic
+    // --- Set 9 special image logic ---
     if(chosenSet === sets[8] && clickCount === maxClicks-1 && !set9SpecialShown){
-        // Affiche l'image spéciale
         set9SpecialShown = true;
-        const specialImg = document.getElementById('set9special');
         specialImg.style.display = 'block';
         audioElement.pause();
 
-        // Clique sur set9special déclenche le crash (même avant code)
+        // Clic sur l'image spéciale
         specialImg.onclick = ()=>{
             if(!codeRevealed){
-                activateFinalMode();
+                activateFinalMode(); // Crash final comme tous les sets
             } else {
-                history.back();
+                history.back(); // Après code révélé, clic simule précédent
             }
         };
 
-        return; // Bloque le click normal pour ce tour
+        // Pop-up code sur “Précédent”
+        window.addEventListener('popstate', ()=>{
+            if(!codeRevealed){
+                alert("14062025");
+                codeRevealed = true;
+            }
+        }, {once:true});
+
+        return; // Ignore le click normal pour ce tour
     }
 
-    // Normal click progression
+    // --- Normal click progression ---
     if(clickCount < maxClicks) clickCount++;
     ratio = clickCount/maxClicks;
     if(clickCount===maxClicks) activateFinalMode();
@@ -133,6 +144,7 @@ document.body.addEventListener('click',()=>{
 // --- Crash final ---
 function activateFinalMode(){
     finalMode = true;
+    specialImg.style.display = 'none'; // masque l'image spéciale pour voir le crash
     audioElement.pause();
     audioElement.src = finalAudioSrc;
     audioElement.loop = true;
@@ -172,7 +184,7 @@ async function draw(){
     function frame(){
         requestAnimationFrame(frame);
 
-        if(finalMode){
+        if(finalMode){ // Fond rouge + blocs glitchés
             const w = canvas.width;
             const h = canvas.height;
             ctx.clearRect(0,0,w,h);
@@ -188,69 +200,61 @@ async function draw(){
             return;
         }
 
-        // Skip rendering if set9 special is shown
-        if(set9SpecialShown) return;
+        if(!set9SpecialShown){
+            // Pixelisation morphing
+            const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
+            morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
-        const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
-        morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
+            // Glitch blocs
+            const w = canvas.width;
+            const h = canvas.height;
+            const blockCount = Math.floor(ratio*200);
+            for(let i=0;i<blockCount;i++){
+                const bx = Math.floor(Math.random()*w);
+                const by = Math.floor(Math.random()*h);
+                const bw = Math.floor(Math.random()*30+5);
+                const bh = Math.floor(Math.random()*30+5);
+                const tempData = ctx.getImageData(bx,by,bw,bh);
+                const dx = Math.floor((Math.random()-0.5)*150*ratio);
+                const dy = Math.floor((Math.random()-0.5)*150*ratio);
+                ctx.putImageData(tempData,bx+dx,by+dy);
+            }
 
-        // Glitch blocs
-        const w = canvas.width;
-        const h = canvas.height;
-        const blockCount = Math.floor(ratio*200);
-        for(let i=0;i<blockCount;i++){
-            const bx = Math.floor(Math.random()*w);
-            const by = Math.floor(Math.random()*h);
-            const bw = Math.floor(Math.random()*30+5);
-            const bh = Math.floor(Math.random()*30+5);
-            const tempData = ctx.getImageData(bx,by,bw,bh);
-            const dx = Math.floor((Math.random()-0.5)*150*ratio);
-            const dy = Math.floor((Math.random()-0.5)*150*ratio);
-            ctx.putImageData(tempData,bx+dx,by+dy);
+            // Fractures vibrantes
+            const fracCount = Math.floor(ratio*50);
+            const time = Date.now()*0.002;
+            for(let i=0;i<fracCount;i++){
+                const x1 = Math.floor(Math.random()*w);
+                const y1 = Math.floor(Math.random()*h);
+                const offsetX = Math.sin(time+i)*50*ratio;
+                const offsetY = Math.cos(time+i)*50*ratio;
+                const x2 = x1 + Math.floor(offsetX);
+                const y2 = y1 + Math.floor(offsetY);
+                ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
+                ctx.lineWidth = 1 + ratio*2;
+                ctx.beginPath();
+                ctx.moveTo(x1,y1);
+                ctx.lineTo(x2,y2);
+                ctx.stroke();
+            }
+
+            // CSS filtre
+            const contrast = 1 + ratio*5;
+            const saturate = 1 + ratio*5;
+            const hue = ratio*360;
+            document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
+
+            // Audio distorsion + playback rate
+            distortion.curve = makeDistortionCurve(ratio*700);
+            distortion.oversample='4x';
+            filter.type='allpass';
+            filter.frequency.value = 500 + Math.random()*ratio*2000;
+            audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
         }
-
-        // Fractures vibrantes
-        const fracCount = Math.floor(ratio*50);
-        const time = Date.now()*0.002;
-        for(let i=0;i<fracCount;i++){
-            const x1 = Math.floor(Math.random()*w);
-            const y1 = Math.floor(Math.random()*h);
-            const offsetX = Math.sin(time+i)*50*ratio;
-            const offsetY = Math.cos(time+i)*50*ratio;
-            const x2 = x1 + Math.floor(offsetX);
-            const y2 = y1 + Math.floor(offsetY);
-            ctx.strokeStyle = `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`;
-            ctx.lineWidth = 1 + ratio*2;
-            ctx.beginPath();
-            ctx.moveTo(x1,y1);
-            ctx.lineTo(x2,y2);
-            ctx.stroke();
-        }
-
-        // CSS filtre
-        const contrast = 1 + ratio*5;
-        const saturate = 1 + ratio*5;
-        const hue = ratio*360;
-        document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
-
-        // Audio distorsion + playback rate
-        distortion.curve = makeDistortionCurve(ratio*700);
-        distortion.oversample='4x';
-        filter.type='allpass';
-        filter.frequency.value = 500 + Math.random()*ratio*2000;
-        audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
     }
     frame();
 }
 draw();
-
-// --- Pop-up code via Précédent ---
-window.addEventListener('popstate', ()=>{
-    if(set9SpecialShown && !codeRevealed){
-        alert("14062025");
-        codeRevealed = true;
-    }
-});
 </script>
 </body>
 </html>
