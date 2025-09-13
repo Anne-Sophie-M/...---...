@@ -6,7 +6,7 @@
 <style>
 html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
 canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:20; display:none; cursor:pointer;}
+#set9special {position:fixed; top:0; left:0; width:100%; height:100%; z-index:100; display:none; cursor:pointer;}
 #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
 #finalText { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-size:5vw; color:white; font-family:'Courier New', monospace; text-align:center; pointer-events:none; display:none; max-width: 80vw; }
 </style>
@@ -66,8 +66,6 @@ async function preloadImages(sources){
 const audioElement = document.getElementById('audio');
 audioElement.src = audioSrc;
 const finalAudioSrc = "audio/final_scream.mp3";
-
-// Audio nodes
 const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 const source = audioCtx.createMediaElementSource(audioElement);
 const distortion = audioCtx.createWaveShaper();
@@ -83,10 +81,7 @@ gainNode.gain.value = 1;
 analyser.fftSize = 256;
 
 function makeDistortionCurve(amount){
-    const k = amount;
-    const n = 44100;
-    const curve = new Float32Array(n);
-    const deg = Math.PI/180;
+    const k = amount; const n = 44100; const curve = new Float32Array(n); const deg=Math.PI/180;
     for(let i=0;i<n;i++){
         const x = i*2/n-1;
         curve[i] = ((3+k)*x*20*deg)/(Math.PI+k*Math.abs(x));
@@ -102,45 +97,45 @@ document.getElementById('startButton').addEventListener('click',()=>{
 });
 
 // --- Clicks ---
-let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
-let set9SpecialShown = false;
-let codeRevealed = false;
-
+let clickCount=0, ratio=0, finalMode=false;
+let set9SpecialShown = false, codeRevealed = false;
 const specialImg = document.getElementById('set9special');
 
 document.body.addEventListener('click',()=>{
     if(finalMode) return;
 
-    // Set 9 special image logic
-    if(chosenSet === sets[8] && clickCount === maxClicks-1 && !set9SpecialShown){
+    // --- Set9 special logic ---
+    if(chosenSet === sets[8] && clickCount === 46 && !set9SpecialShown){
         set9SpecialShown = true;
         specialImg.style.display = 'block';
         audioElement.pause();
 
-        // Clic sur l’image spéciale déclenche crash si code pas révélé
-        specialImg.onclick = ()=>{
-            activateFinalMode(); // crash final toujours possible
+        // Clic sur image spéciale
+        specialImg.onclick = () => {
+            if(!codeRevealed){
+                activateFinalMode(); // Crash final
+            } else {
+                history.back(); // Après code révélé
+            }
         };
 
-        // 9 secondes pour que le joueur clique sur "Précédent" pour révéler le code
+        // Pop-up code après clic sur "Précédent" et 9s
         setTimeout(()=>{
-            window.addEventListener('popstate', ()=>{
+            window.addEventListener('popstate', () => {
                 if(!codeRevealed){
                     alert("14062025");
                     codeRevealed = true;
-                    // Après code révélé, clic sur image simule précédent
-                    specialImg.onclick = ()=>{ history.back(); };
                 }
             }, {once:true});
-        }, 9000);
+        },9000);
 
-        return; // bloque le click normal pour ce tour
+        return; // bloque progression normale ce tour
     }
 
-    // Normal click progression
-    if(clickCount < maxClicks) clickCount++;
-    ratio = clickCount/maxClicks;
-    if(clickCount===maxClicks) activateFinalMode();
+    // --- Normal click progression ---
+    if(clickCount < 47) clickCount++;
+    ratio = clickCount/47;
+    if(clickCount === 47) activateFinalMode();
 });
 
 // --- Crash final ---
@@ -185,7 +180,7 @@ async function draw(){
     function frame(){
         requestAnimationFrame(frame);
 
-        if(finalMode){ 
+        if(finalMode){
             const w = canvas.width;
             const h = canvas.height;
             ctx.clearRect(0,0,w,h);
@@ -201,11 +196,13 @@ async function draw(){
             return;
         }
 
-        if(set9SpecialShown) return; // skip normal rendering
+        if(set9SpecialShown) return; // overlay bloque rendu du canvas
 
+        // Morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
         morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
+        // Glitch blocs
         const w = canvas.width;
         const h = canvas.height;
         const blockCount = Math.floor(ratio*200);
@@ -220,6 +217,7 @@ async function draw(){
             ctx.putImageData(tempData,bx+dx,by+dy);
         }
 
+        // Fractures vibrantes
         const fracCount = Math.floor(ratio*50);
         const time = Date.now()*0.002;
         for(let i=0;i<fracCount;i++){
@@ -237,11 +235,13 @@ async function draw(){
             ctx.stroke();
         }
 
+        // CSS filtre
         const contrast = 1 + ratio*5;
         const saturate = 1 + ratio*5;
         const hue = ratio*360;
         document.body.style.filter = `contrast(${contrast}) saturate(${saturate}) hue-rotate(${hue}deg)`;
 
+        // Audio
         distortion.curve = makeDistortionCurve(ratio*700);
         distortion.oversample='4x';
         filter.type='allpass';
