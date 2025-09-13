@@ -4,13 +4,28 @@
   <meta charset="UTF-8">
   <title>l'antre du voleur d'innocence</title>
   <style>
-    html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
-    canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-    #startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
+    html,body {
+      margin:0; padding:0; width:100%; height:100%;
+      overflow:hidden; background:black;
+    }
+    canvas {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%; object-fit:cover;
+      z-index:-1;
+    }
+    #startButton {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:transparent; border:none;
+      cursor:pointer; z-index:10;
+    }
     #finalText {
-      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-      font-size:5vw; color:white; font-family:'Courier New', monospace;
-      text-align:center; pointer-events:none; display:none; max-width: 80vw;
+      position:fixed; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      font-size:5vw; color:white;
+      font-family:'Courier New', monospace;
+      text-align:center; pointer-events:none;
+      display:none; max-width:80vw;
     }
   </style>
 </head>
@@ -42,8 +57,8 @@
     const transitions = chosenSet.images;
     const audioSrc = chosenSet.audio;
     const finalText = chosenSet.text;
-
     let loadedImages = [];
+
     const temp = document.createElement('canvas');
     const tctx = temp.getContext('2d');
     temp.width = canvas.width;
@@ -63,12 +78,13 @@
     const audioElement = document.getElementById('audio');
     audioElement.src = audioSrc;
     const finalAudioSrc = "audio/final_scream.mp3";
+
     const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
     const source = audioCtx.createMediaElementSource(audioElement);
     const distortion = audioCtx.createWaveShaper();
     const filter = audioCtx.createBiquadFilter();
     const gainNode = audioCtx.createGain();
-    const analyser = document.createElement('AnalyserNode');
+
     source.connect(distortion);
     distortion.connect(filter);
     filter.connect(gainNode);
@@ -94,18 +110,22 @@
     });
 
     let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
-
-    // --- Set9 spécial ---
-    let specialImage=false;
-    let specialTimer=false;
+    let specialImage=false, specialTimer=false, hasLost=false;
 
     document.body.addEventListener('click',()=>{
       if(finalMode) return;
 
-      // --- Cas set9 avant crash ---
+      // Cas set9 → image spéciale avant crash
       if(chosenSet===sets[8] && clickCount===maxClicks-1 && !specialImage){
         showSpecialImage();
         specialImage=true;
+        return;
+      }
+
+      // Si on est sur l'image spéciale et le joueur clique → crash (perdu)
+      if(specialImage){
+        hasLost = true;
+        activateFinalMode(); // crash
         return;
       }
 
@@ -115,16 +135,18 @@
     });
 
     function showSpecialImage(){
-      // Affiche l'image spéciale
       const img = new Image();
       img.src="images/set9special.jpg";
-      img.onload = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
-
-      // Silence total
+      img.onload = ()=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      };
+      // Supprime tout effet visuel
+      document.body.style.filter = "none";
+      // Silence audio
       audioElement.pause();
       audioCtx.suspend();
-
-      // Timer 9 secondes pour activer le code secret
+      // Timer pour débloquer le code secret
       setTimeout(()=>{ specialTimer=true; },5000);
     }
 
@@ -166,7 +188,8 @@
       await preloadImages(transitions);
       function frame(){
         requestAnimationFrame(frame);
-        if(finalMode) {
+
+        if(finalMode){
           const w=canvas.width,h=canvas.height;
           ctx.clearRect(0,0,w,h);
           const blockCount=500;
@@ -181,7 +204,7 @@
           return;
         }
 
-        // --- Si image spéciale set9, ne rien faire ---
+        // Si image spéciale set9 → ne rien dessiner
         if(specialImage) return;
 
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
@@ -232,11 +255,11 @@
     }
     draw();
 
-    // --- Code secret via "précédent" uniquement après 9s sur image spéciale ---
+    // --- Code secret via "Précédent" ---
     if(chosenSet===sets[8]){
       history.pushState({page:"main"},"");
       window.addEventListener("popstate",(event)=>{
-        if(specialImage && specialTimer){
+        if(specialImage && specialTimer && !hasLost){
           alert("14062005");
           history.pushState({page:"main"},"");
         }
