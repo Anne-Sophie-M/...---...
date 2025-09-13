@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <title>Test Set9</title>
 <style>
-html,body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
-canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-1;}
-#startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10;}
+html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black; }
+canvas { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+#startButton { position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:10; }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<audio id="audio" loop></audio>
 <button id="startButton"></button>
+<audio id="audio" loop></audio>
 
 <script>
 const canvas = document.getElementById('canvas');
@@ -20,93 +20,115 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// --- Set9 images et audio ---
-const set9Images = [
+// --- Set9 uniquement pour test ---
+const transitions = [
     "images/set9trans1.jpg",
     "images/set9trans2.jpg",
     "images/set9trans3.jpg",
     "images/set9trans4.jpg",
     "images/set9final.jpg"
 ];
-const specialImgPath = "images/set9special.jpg";
+const specialImageSrc = "images/set9special.jpg";
 const audioSrc = "audio/audio9.mp3";
 
-let loadedImgs = [];
-const tempCanvas = document.createElement('canvas');
-const tctx = tempCanvas.getContext('2d');
-tempCanvas.width = canvas.width;
-tempCanvas.height = canvas.height;
+let loadedImages = [];
+const temp = document.createElement('canvas');
+const tctx = temp.getContext('2d');
+temp.width = canvas.width;
+temp.height = canvas.height;
+
+async function preloadImages(sources){
+    const promises = sources.map(src => new Promise(resolve=>{
+        const img = new Image();
+        img.src = src;
+        img.onload = ()=>resolve(img);
+        img.onerror = ()=>resolve(img);
+    }));
+    loadedImages = await Promise.all(promises);
+}
 
 // --- Audio ---
 const audioElement = document.getElementById('audio');
 audioElement.src = audioSrc;
-const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-const source = audioCtx.createMediaElementSource(audioElement);
-source.connect(audioCtx.destination);
 
 // --- Clicks ---
 let clickCount = 0;
-const maxClicks = 46;
-let specialVisible = false;
+const maxClicks = 47;
 let ratio = 0;
-
-// --- Préload images ---
-async function preloadImages(paths){
-    const promises = paths.map(p => new Promise(resolve=>{
-        const img = new Image();
-        img.src = p;
-        img.onload = ()=>resolve(img);
-        img.onerror = ()=>resolve(img);
-    }));
-    loadedImgs = await Promise.all(promises);
-
-    // Test : dessine la première image pour vérifier
-    ctx.drawImage(loadedImgs[0],0,0,canvas.width,canvas.height);
-}
-preloadImages(set9Images);
+let specialVisible = false;
 
 // --- Start button ---
-document.getElementById('startButton').addEventListener('click',()=>{
-    audioCtx.resume();
+const startButton = document.getElementById('startButton');
+startButton.addEventListener('click', ()=>{
     audioElement.play();
-    document.getElementById('startButton').style.display='none';
+    startButton.style.display = 'none';
+    clickCount++; // premier clic considéré
+    ratio = clickCount / maxClicks;
 });
 
-// --- Morphing ---
-const steps = [10,20,30,40,maxClicks];
-function getTransitionIndex(click){
-    for(let i=0;i<steps.length;i++){
-        if(click<=steps[i]){
-            const prevIndex = i===0?0:i-1;
-            const alpha = (click-(i===0?0:steps[i-1]))/(steps[i]-(i===0?0:steps[i-1]));
-            return {prevIndex,nextIndex:i,alpha};
-        }
+// --- Gestion des clics ---
+document.body.addEventListener('click', ()=>{
+    if(clickCount === maxClicks-1 && !specialVisible){
+        // Clic 46 → image spéciale
+        showSpecialImage();
+        specialVisible = true;
+        return;
     }
-    return {prevIndex:loadedImgs.length-2,nextIndex:loadedImgs.length-1,alpha:1};
+    if(!specialVisible && clickCount < maxClicks){
+        clickCount++;
+        ratio = clickCount / maxClicks;
+    }
+});
+
+// --- Affichage de l'image spéciale ---
+function showSpecialImage(){
+    audioElement.pause(); // stop audio
+    const img = new Image();
+    img.src = specialImageSrc;
+    img.onload = ()=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    };
 }
 
-function morphImages(img1,img2,alpha){
-    tctx.clearRect(0,0,tempCanvas.width,tempCanvas.height);
+// --- Morphing ---
+function getTransitionIndex(clickCount){
+    const steps = [10,20,30,40,46];
+    for(let i=0;i<steps.length;i++){
+        if(clickCount <= steps[i]){
+            const prevIndex = i===0?0:i-1;
+            const alpha = (clickCount-(i===0?0:steps[i-1])) / (steps[i]-(i===0?0:steps[i-1]));
+            return {prevIndex, nextIndex:i, alpha};
+        }
+    }
+    return {prevIndex:transitions.length-2, nextIndex:transitions.length-1, alpha:1};
+}
+
+function morphImages(ctx,img1,img2,alpha){
+    tctx.clearRect(0,0,temp.width,temp.height);
     tctx.globalAlpha = 1-alpha;
-    tctx.drawImage(img1,0,0,tempCanvas.width,tempCanvas.height);
+    tctx.drawImage(img1,0,0,temp.width,temp.height);
     tctx.globalAlpha = alpha;
-    tctx.drawImage(img2,0,0,tempCanvas.width,tempCanvas.height);
+    tctx.drawImage(img2,0,0,temp.width,temp.height);
     tctx.globalAlpha = 1;
-    ctx.drawImage(tempCanvas,0,0,canvas.width,canvas.height);
+    ctx.drawImage(temp,0,0,canvas.width,canvas.height);
 }
 
 // --- Draw loop ---
-function draw(){
+async function draw(){
+    await preloadImages(transitions);
     function frame(){
         requestAnimationFrame(frame);
 
-        if(specialVisible) return; // image spéciale visible, pas d'effets
+        if(specialVisible) return; // aucun effet quand image spéciale visible
 
+        // Morphing
         const {prevIndex,nextIndex,alpha} = getTransitionIndex(clickCount);
-        morphImages(loadedImgs[prevIndex], loadedImgs[nextIndex], alpha);
+        morphImages(ctx, loadedImages[prevIndex], loadedImages[nextIndex], alpha);
 
-        // --- Glitch ---
-        const w = canvas.width, h = canvas.height;
+        // Glitch
+        const w = canvas.width;
+        const h = canvas.height;
         const blockCount = Math.floor(ratio*200);
         for(let i=0;i<blockCount;i++){
             const bx = Math.floor(Math.random()*w);
@@ -119,7 +141,7 @@ function draw(){
             ctx.putImageData(tempData,bx+dx,by+dy);
         }
 
-        // --- CSS filtre ---
+        // Filtres CSS
         const contrast = 1 + ratio*5;
         const saturate = 1 + ratio*5;
         const hue = ratio*360;
@@ -127,29 +149,8 @@ function draw(){
     }
     frame();
 }
+
 draw();
-
-// --- Click handler ---
-document.body.addEventListener('click',()=>{
-    if(specialVisible) return;
-    clickCount++;
-    if(clickCount>maxClicks) clickCount=maxClicks;
-    ratio = clickCount/maxClicks;
-
-    if(clickCount===maxClicks){
-        // Affiche l'image spéciale, stop audio et effets
-        const img = new Image();
-        img.src = specialImgPath;
-        img.onload = ()=>{
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.drawImage(img,0,0,canvas.width,canvas.height);
-        };
-        audioElement.pause();
-        audioCtx.suspend();
-        specialVisible = true;
-    }
-});
 </script>
 </body>
 </html>
-
