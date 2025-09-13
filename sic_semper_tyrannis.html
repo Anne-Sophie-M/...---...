@@ -40,7 +40,7 @@ const sets = [
   {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
   {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
   {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
-  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée"}
+  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée", special:true}
 ];
 
 // --- Choix aléatoire du set ---
@@ -48,6 +48,7 @@ const chosenSet = sets[Math.floor(Math.random()*sets.length)];
 const transitions = chosenSet.images;
 const audioSrc = chosenSet.audio;
 const finalText = chosenSet.text;
+const isSpecialSet = chosenSet.special || false;
 
 // --- Préchargement des images ---
 let loadedImages = [];
@@ -84,7 +85,6 @@ gainNode.connect(analyser);
 analyser.connect(audioCtx.destination);
 gainNode.gain.value = 1;
 analyser.fftSize = 256;
-const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
 function makeDistortionCurve(amount){
   const k = amount;
@@ -107,42 +107,50 @@ document.getElementById('startButton').addEventListener('click',()=>{
 
 // --- Clicks ---
 let clickCount=0, maxClicks=47, ratio=0, finalMode=false;
-let specialTimeout = null;
-let specialActive = false;
+let specialActive = false, specialTimer = null;
 
 document.body.addEventListener('click',()=>{
-  // Si on est en mode final ou en attente popup spécial
-  if(finalMode || specialActive) return;
+  if(finalMode) return;
+
+  // --- Cas special pour set9 ---
+  if(isSpecialSet && clickCount===46 && !specialActive){
+    specialActive = true;
+    ratio = 46/maxClicks;
+
+    // Afficher image spéciale
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const specialImg = new Image();
+    specialImg.src = "images/set9special.jpg";
+    specialImg.onload = () => {
+      ctx.drawImage(specialImg,0,0,canvas.width,canvas.height);
+    };
+
+    // Mettre le son en pause
+    audioElement.pause();
+
+    // Timer 9s pour popup si retour précédent
+    specialTimer = Date.now();
+    return; // ne pas incrémenter clickCount
+  }
 
   clickCount++;
   ratio = clickCount/maxClicks;
 
-  // set9 special déclenche
-  if(chosenSet===sets[8] && clickCount===46){ // juste avant le crash
-    specialActive = true;
-    // affiche l'image spéciale
-    const specialImg = new Image();
-    specialImg.src = "images/set9special.jpg";
-    specialImg.onload = ()=>{
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(specialImg,0,0,canvas.width,canvas.height);
-    };
-    // coupe le son
-    audioElement.pause();
-    // lance le timer pour le popup
-    specialTimeout = setTimeout(()=>{
-      window.addEventListener('popstate', onSpecialBack, {once:true});
-    }, 9000); // 9s attente
-    return; // bloque les clicks normaux
-  }
-
+  // --- Activation final ---
   if(clickCount===maxClicks) activateFinalMode();
 });
 
-// --- fonction popup set9special ---
-function onSpecialBack(){
-  alert("Code secret : 42-LOVE-99");
-}
+// --- Gestion du "Précédent" uniquement pendant set9special ---
+window.addEventListener('popstate', (e)=>{
+  if(specialActive){
+    const elapsed = (Date.now()-specialTimer)/1000;
+    if(elapsed >=9){
+      alert("Code: 14062025");
+      specialActive = false;
+      specialTimer = null;
+    }
+  }
+});
 
 // --- Crash final ---
 function activateFinalMode(){
@@ -159,6 +167,7 @@ function activateFinalMode(){
 
 // --- Morphing progressif ---
 const steps = [10,20,30,40,47];
+
 function getTransitionIndex(clickCount){
   for(let i=0;i<steps.length;i++){
     if(clickCount <= steps[i]){
@@ -169,6 +178,7 @@ function getTransitionIndex(clickCount){
   }
   return {prevIndex:transitions.length-2, nextIndex:transitions.length-1, alpha:1};
 }
+
 function morphImages(ctx,img1,img2,alpha){
   tctx.clearRect(0,0,temp.width,temp.height);
   tctx.globalAlpha = 1-alpha;
@@ -187,7 +197,6 @@ async function draw(){
     requestAnimationFrame(frame);
 
     if(finalMode){
-      // Fond rouge + blocs glitchés
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0,0,w,h);
@@ -203,7 +212,7 @@ async function draw(){
       return;
     }
 
-    // Si image spéciale active, ne rien faire
+    // --- Ne rien faire si image spéciale active ---
     if(specialActive) return;
 
     // Pixelisation morphing
@@ -255,6 +264,7 @@ async function draw(){
     filter.type='allpass';
     filter.frequency.value = 500 + Math.random()*ratio*2000;
     audioElement.playbackRate = 1 + ratio*0.8 + Math.random()*0.02;
+
   }
 
   frame();
