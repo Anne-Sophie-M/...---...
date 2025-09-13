@@ -39,7 +39,7 @@ const sets = [
   {images:["images/set6trans1.jpg","images/set6trans2.jpg","images/set6trans3.jpg","images/set6trans4.jpg","images/set6final.jpg"], audio:"audio/audio6.mp3", text:"innocence brisée"},
   {images:["images/set7trans1.jpg","images/set7trans2.jpg","images/set7trans3.jpg","images/set7trans4.jpg","images/set7final.jpg"], audio:"audio/audio7.mp3", text:"innocence brisée"},
   {images:["images/set8trans1.jpg","images/set8trans2.jpg","images/set8trans3.jpg","images/set8trans4.jpg","images/set8final.jpg"], audio:"audio/audio8.mp3", text:"innocence brisée"},
-  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"innocence brisée", special:true}
+  {images:["images/set9trans1.jpg","images/set9trans2.jpg","images/set9trans3.jpg","images/set9trans4.jpg","images/set9final.jpg"], audio:"audio/audio9.mp3", text:"Fire will claim you where innocence was taken - Le feu te dévorera là où tu as pris leur innocence", special:true}
 ];
 
 const chosenSet = sets[Math.floor(Math.random()*sets.length)];
@@ -126,10 +126,15 @@ document.body.addEventListener('click',()=>{
 // --- Crash final ---
 function activateFinalMode(){
   finalMode = true;
+
+  // Reprise du son
+  audioCtx.resume();
+
   audioElement.pause();
   audioElement.src = finalAudioSrc;
   audioElement.loop = true;
   audioElement.play();
+
   distortion.curve = makeDistortionCurve(1500);
   const ft = document.getElementById('finalText');
   ft.innerText = finalText;
@@ -144,6 +149,10 @@ function showSpecialImage(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(specialImg,0,0,canvas.width,canvas.height);
   };
+
+  // Silence total
+  audioElement.pause();
+  audioCtx.suspend();
 
   // Timer 9 secondes
   setTimeout(()=>{ specialTimer=true; },9000);
@@ -189,7 +198,7 @@ async function draw(){
     if(finalMode) return;
 
     if(chosenSet.special && specialMode){
-      // image fixe, pas de glitch
+      // Image fixe + silence, pas de glitch
       return;
     }
 
