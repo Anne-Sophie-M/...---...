@@ -2,91 +2,82 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Test Set9 Special</title>
+<title>Test Set9 Simple</title>
 <style>
-html, body {margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:black;}
-canvas {position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0;}
-#set9special {position:fixed; top:0; left:0; width:100%; height:100%; display:none; cursor:pointer; z-index:10;}
-#startButton {position:fixed; top:0; left:0; width:100%; height:100%; background:transparent; border:none; cursor:pointer; z-index:20;}
+html, body {
+  margin:0; padding:0;
+  width:100%; height:100%;
+  background:black;
+  overflow:hidden;
+}
+#glitchCanvas {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:black;
+}
+#special {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  display:none; /* invisible au départ */
+  z-index:10;   /* par dessus tout */
+}
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-<img id="set9special" src="images/set9special.jpg">
-<button id="startButton"></button>
+<canvas id="glitchCanvas"></canvas>
+<img id="special" src="images/set9special.jpg">
+
+<audio id="audio" src="sons/test.mp3" loop></audio>
 
 <script>
-// --- Canvas setup ---
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("glitchCanvas");
+const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// --- Sets ---
-const sets = [
-  {images:["images/set1trans1.jpg","images/set1trans2.jpg"], audio:"", text:"Set1"},
-  {images:["images/set2trans1.jpg","images/set2trans2.jpg"], audio:"", text:"Set2"},
-  {images:["images/set9trans1.jpg","images/set9trans2.jpg"], audio:"", text:"Set9"}
-];
-
-const chosenSet = sets[Math.floor(Math.random()*sets.length)];
-let transitions = chosenSet.images;
-
-// --- Preload images ---
-let loadedImages = [];
-async function preloadImages(sources){
-    const promises = sources.map(src => new Promise(resolve=>{
-        const img = new Image();
-        img.src = src;
-        img.onload = ()=>resolve(img);
-        img.onerror = ()=>resolve(img);
-    }));
-    loadedImages = await Promise.all(promises);
-}
-
-// --- Clicks ---
 let clickCount = 0;
-let maxClicks = 2; // pour test rapide
-let set9SpecialShown = false;
+let running = true;
 
-// --- Start button ---
-document.getElementById('startButton').addEventListener('click', ()=>{
-    document.getElementById('startButton').style.display='none';
-    draw();
-});
+// charger une image "set9 normale"
+const img = new Image();
+img.src = "images/set9.jpg";
 
-// --- Draw loop ---
-async function draw(){
-    await preloadImages(transitions);
-    function frame(){
-        requestAnimationFrame(frame);
+img.onload = () => {
+  drawLoop();
+};
 
-        // Si set9 special affiché, rien ne se passe
-        if(set9SpecialShown) return;
-
-        // Dessin simple des images selon clickCount
-        const img = loadedImages[Math.min(clickCount, loadedImages.length-1)];
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(img,0,0,canvas.width,canvas.height);
-    }
-    frame();
+function drawLoop() {
+  if (!running) return; // stop si on arrête tout
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+  // petit effet visuel "glitch" simulé
+  ctx.filter = `contrast(${100 + Math.random()*50}%)`;
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  
+  requestAnimationFrame(drawLoop);
 }
 
-// --- Click handling ---
-document.body.addEventListener('click', ()=>{
-    // Si set9 special déjà affiché, ne rien faire
-    if(set9SpecialShown) return;
+// démarrage audio
+const audio = document.getElementById("audio");
+audio.play().catch(e=>console.log("Audio bloqué par le navigateur"));
 
-    clickCount++;
-    
-    // Test : clic 2 déclenche set9special
-    if(chosenSet === sets[2] && clickCount === 2){
-        set9SpecialShown = true;
-        const specialImg = document.getElementById('set9special');
-        specialImg.style.display = 'block';
-        console.log("set9special affiché !");
-        return;
-    }
+document.body.addEventListener("click", ()=>{
+  clickCount++;
+
+  if(clickCount === 46){
+    // stop boucle & audio
+    running = false;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    audio.pause();
+    audio.currentTime = 0;
+
+    // affiche l’image spéciale
+    document.getElementById("special").style.display = "block";
+    console.log("set9special affichée sans effets !");
+  }
 });
 </script>
 </body>
