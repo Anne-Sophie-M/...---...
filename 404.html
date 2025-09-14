@@ -1,189 +1,178 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Piège</title>
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      background: black;
-      overflow: hidden;
-      cursor: pointer; /* on suggère de cliquer */
-    }
+<meta charset="UTF-8">
+<title>Piège</title>
+<style>
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: black;
+  overflow: hidden;
+  cursor: pointer;
+}
 
-    #background {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      transition: opacity 0.8s ease-in-out;
-      opacity: 1;
-      filter: contrast(1.2) brightness(0.9);
-    }
+#background {
+  position: absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+  filter: contrast(1.2) brightness(0.9);
+}
 
-    #grain {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('https://i.imgur.com/9l9bU.jpg');
-      background-size: cover;
-      mix-blend-mode: overlay;
-      opacity: 0.2;
-      animation: grainMove 1s steps(8) infinite;
-      pointer-events: none;
-    }
-    @keyframes grainMove {
-      0% { transform: translate(0,0); }
-      20% { transform: translate(-4px,2px); }
-      40% { transform: translate(3px,-2px); }
-      60% { transform: translate(-2px,1px); }
-      80% { transform: translate(2px,-1px); }
-      100% { transform: translate(0,0); }
-    }
+#grain {
+  position: absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background: url('https://i.imgur.com/9l9bU.jpg');
+  background-size: cover;
+  mix-blend-mode: overlay;
+  opacity: 0.2;
+  animation: grainMove 1s steps(8) infinite;
+  pointer-events: none;
+}
+@keyframes grainMove {
+  0%{transform:translate(0,0);} 20%{transform:translate(-4px,2px);} 40%{transform:translate(3px,-2px);}
+  60%{transform:translate(-2px,1px);} 80%{transform:translate(2px,-1px);} 100%{transform:translate(0,0);}
+}
 
-    #popup {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-      display: none;
-      cursor: pointer;
-    }
-    #popupContent {
-      background: black;
-      border: 3px solid red;
-      padding: 40px;
-      color: red;
-      font-size: 2.5em;
-      text-align: center;
-      text-transform: uppercase;
-      text-shadow: 0 0 15px red, 0 0 30px black;
-    }
-
-    @keyframes glitch1 {
-      0% { transform: translate(0, 0); }
-      20% { transform: translate(-2px, 1px); }
-      40% { transform: translate(2px, -1px); }
-      60% { transform: translate(-1px, -2px); }
-      80% { transform: translate(1px, 2px); }
-      100% { transform: translate(0, 0); }
-    }
-    @keyframes glitch2 {
-      0% { transform: translate(0, 0); }
-      20% { transform: translate(-3px, 2px); }
-      40% { transform: translate(3px, -2px); }
-      60% { transform: translate(-2px, -3px); }
-      80% { transform: translate(2px, 3px); }
-      100% { transform: translate(0, 0); }
-    }
-    @keyframes glitch3 {
-      0% { transform: translate(0, 0); }
-      20% { transform: translate(-4px, 2px); }
-      40% { transform: translate(4px, -3px); }
-      60% { transform: translate(-3px, -4px); }
-      80% { transform: translate(3px, 4px); }
-      100% { transform: translate(0, 0); }
-    }
-  </style>
+#popup {
+  position: fixed;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.9);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+  display:none;
+  cursor:pointer;
+}
+#popupContent {
+  background:black;
+  border:3px solid red;
+  padding:40px;
+  color:red;
+  font-size:2.5em;
+  text-align:center;
+  text-transform:uppercase;
+  text-shadow: 0 0 15px red,0 0 30px black;
+}
+@keyframes glitch1 {0%{transform:translate(0,0);}20%{transform:translate(-2px,1px);}40%{transform:translate(2px,-1px);}
+60%{transform:translate(-1px,-2px);}80%{transform:translate(1px,2px);}100%{transform:translate(0,0);}}
+@keyframes glitch2 {0%{transform:translate(0,0);}20%{transform:translate(-3px,2px);}40%{transform:translate(3px,-2px);}
+60%{transform:translate(-2px,-3px);}80%{transform:translate(2px,3px);}100%{transform:translate(0,0);}}
+@keyframes glitch3 {0%{transform:translate(0,0);}20%{transform:translate(-4px,2px);}40%{transform:translate(4px,-3px);}
+60%{transform:translate(-3px,-4px);}80%{transform:translate(3px,4px);}100%{transform:translate(0,0);}}
+</style>
 </head>
 <body>
-  <div id="background"></div>
-  <div id="grain"></div>
 
-  <div id="popup">
-    <div id="popupContent"></div>
-  </div>
-  
-  <audio id="audio"></audio>
+<div id="background"></div>
+<div id="grain"></div>
 
-  <script>
-    const etapes = [
-      { img: "https://picsum.photos/id/237/1920/1080", popup: null, audio: "https://upload.wikimedia.org/wikipedia/commons/0/05/Deep_breath.ogg" }, // clic image
-      { img: null, popup: "C'est coincé !", audio: "https://upload.wikimedia.org/wikipedia/commons/8/89/Breathing.ogg" }, // retour -> popup
-      { img: "https://picsum.photos/id/1025/1920/1080", popup: null, audio: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Breathing_fast.ogg" }, // fermer popup -> image
-      { img: null, popup: "C'EST BLOQUÉ !", audio: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Footsteps.ogg" }, // retour -> popup
-      { img: "https://picsum.photos/id/1003/1920/1080", popup: null, audio: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Violin.ogg" }, // fermer popup -> image triste
-    ];
+<div id="popup">
+  <div id="popupContent"></div>
+</div>
 
-    let index = 0;
-    const bgEl = document.getElementById("background");
-    const audioEl = document.getElementById("audio");
-    const popup = document.getElementById("popup");
-    const popupContent = document.getElementById("popupContent");
+<audio id="audio1" loop></audio>
+<audio id="audio2" loop></audio>
 
-    const glitches = ["glitch1", "glitch2", "glitch3"];
+<script>
+const etapes = [
+  { img:"https://picsum.photos/id/237/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // clic image
+  { img:null, popup:"C'est coincé !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }, // retour -> popup
+  { img:"https://picsum.photos/id/1025/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }, // fermer popup -> image
+  { img:null, popup:"C'EST BLOQUÉ !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }, // retour -> popup
+  { img:"https://picsum.photos/id/1003/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }, // fermer popup -> image triste
+  { img:null, popup:"C'est trop tard....", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }, // retour -> popup
+  { img:"https://picsum.photos/id/1069/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }, // fermer popup -> image
+  { img:null, popup:"C'est notre petit secret", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }, // retour -> popup
+  { img:"https://picsum.photos/id/1021/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // dernière image triste
+];
 
-    // Première image affichée directement
-    bgEl.style.backgroundImage = `url(${etapes[0].img})`;
+let index = 0;
+const bgEl = document.getElementById("background");
+const popup = document.getElementById("popup");
+const popupContent = document.getElementById("popupContent");
+const glitches = ["glitch1","glitch2","glitch3"];
 
-    function playAudio(src) {
-      audioEl.src = src;
-      audioEl.play().catch(()=>{});
-    }
+const audio1 = document.getElementById("audio1");
+const audio2 = document.getElementById("audio2");
+let currentAudio = audio1;
+let nextAudio = audio2;
 
-    function setImage(src) {
-      bgEl.style.opacity = 0;
-      setTimeout(() => {
-        bgEl.style.backgroundImage = `url(${src})`;
-        bgEl.style.opacity = 1;
-      }, 300);
-    }
+bgEl.style.backgroundImage = `url(${etapes[0].img})`;
 
-    function setPopup(text, level) {
-      popupContent.textContent = text;
-      popup.style.display = "flex";
-      let gIndex = Math.min(level, glitches.length - 1);
-      popupContent.style.animation = `${glitches[gIndex]} 0.15s infinite`;
-    }
+// Crossfade audio
+function playAudio(src) {
+  nextAudio.src = src;
+  nextAudio.volume = 0;
+  nextAudio.play().catch(()=>{});
+  let vol = 0;
+  const fade = setInterval(()=>{
+    vol+=0.02;
+    if(vol>=1){vol=1; clearInterval(fade);}
+    nextAudio.volume = vol;
+    currentAudio.volume = 1-vol;
+  },50);
+  // swap
+  let tmp=currentAudio; currentAudio=nextAudio; nextAudio=tmp;
+}
 
-    function nextStep() {
-      index++;
-      if (index >= etapes.length) return;
+// Fade image
+function setImage(src){
+  bgEl.style.opacity=0;
+  setTimeout(()=>{
+    bgEl.style.backgroundImage=`url(${src})`;
+    bgEl.style.opacity=1;
+  },300);
+}
 
-      let step = etapes[index];
-      if (step.audio) playAudio(step.audio);
+// Popup
+function setPopup(text,level){
+  popupContent.textContent=text;
+  popup.style.display="flex";
+  let gIndex=Math.min(level, glitches.length-1);
+  popupContent.style.animation=`${glitches[gIndex]} 0.15s infinite`;
+}
 
-      if (step.img) {
-        setImage(step.img);
-      }
-      if (step.popup) {
-        setPopup(step.popup, index);
-      }
+// Next step
+function nextStep(){
+  index++;
+  if(index>=etapes.length) return;
+  let step=etapes[index];
+  if(step.audio) playAudio(step.audio);
+  if(step.img) setImage(step.img);
+  if(step.popup) setPopup(step.popup,index);
+  if(index<etapes.length-1) history.pushState({step:index},"");
+}
 
-      if (index < etapes.length - 1) {
-        history.pushState({step:index}, "");
-      }
-    }
+// Premier clic image -> lancer audio initial
+bgEl.addEventListener("click",()=>{
+  if(index===0) playAudio(etapes[0].audio);
+});
 
-    // Premier clic sur l'image = lancer le son initial
-    bgEl.addEventListener("click", () => {
-      if (index === 0) {
-        playAudio(etapes[0].audio);
-      }
-    });
+// Clic popup -> fermer + avancer
+popup.addEventListener("click",()=>{
+  popup.style.display="none";
+  nextStep();
+});
 
-    // Clic sur popup = fermer et passer à l’image suivante
-    popup.addEventListener("click", () => {
-      popup.style.display = "none";
-      nextStep();
-    });
+// Retour navigateur
+history.pushState({step:0},"");
+window.onpopstate=function(e){
+  nextStep();
+};
+</script>
 
-    // Bouton retour = passe à l’étape suivante
-    history.pushState({step:0}, "");
-    window.onpopstate = function(e) {
-      nextStep();
-    };
-  </script>
 </body>
 </html>
