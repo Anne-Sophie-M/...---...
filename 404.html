@@ -4,69 +4,131 @@
   <meta charset="UTF-8">
   <title>Piège</title>
   <style>
-    body {
+    body, html {
       margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
       background: black;
-      color: red;
-      font-family: Arial, sans-serif;
-      text-align: center;
+      overflow: hidden;
+      font-family: "Courier New", monospace;
     }
-    #container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+
+    /* Image plein écran */
+    #background {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: background-image 1s ease-in-out;
+      filter: contrast(1.2) brightness(0.9);
     }
-    img {
-      max-width: 90%;
-      max-height: 70vh;
-      border: 5px solid red;
-    }
+
+    /* Texte sur l’image */
     #text {
-      margin-top: 20px;
-      font-size: 2em;
+      position: absolute;
+      bottom: 10%;
+      width: 100%;
+      text-align: center;
+      font-size: 3em;
+      color: red;
+      text-shadow: 0 0 10px black, 0 0 20px red;
+    }
+
+    /* Effet vieux projecteur : grain */
+    #grain {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://i.imgur.com/9l9bU.jpg');
+      background-size: cover;
+      mix-blend-mode: overlay;
+      opacity: 0.2;
+      animation: grainMove 1s steps(8) infinite;
+      pointer-events: none;
+    }
+    @keyframes grainMove {
+      0% { transform: translate(0,0); }
+      20% { transform: translate(-10px,5px); }
+      40% { transform: translate(5px,-5px); }
+      60% { transform: translate(-5px,5px); }
+      80% { transform: translate(5px,0); }
+      100% { transform: translate(0,0); }
+    }
+
+    /* Popup personnalisé */
+    #popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      display: none;
+    }
+    #popupContent {
+      background: black;
+      border: 3px solid red;
+      padding: 40px;
+      color: red;
+      font-size: 2.5em;
+      text-align: center;
+      text-transform: uppercase;
+      text-shadow: 0 0 15px red, 0 0 30px black;
+      animation: pulse 1s infinite alternate;
+      max-width: 80%;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(1.1); opacity: 0.7; }
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <img id="image" src="https://picsum.photos/id/237/800/500">
-    <div id="text">Il arrive, va-t’en !</div>
+  <div id="background"></div>
+  <div id="grain"></div>
+  <div id="text">Il arrive, va-t’en !</div>
+
+  <div id="popup">
+    <div id="popupContent"></div>
   </div>
   
-  <audio id="audio" autoplay loop>
-    <source src="https://upload.wikimedia.org/wikipedia/commons/0/05/Deep_breath.ogg" type="audio/ogg">
-  </audio>
+  <audio id="audio" autoplay loop></audio>
 
   <script>
     const etapes = [
       { 
-        img: "https://picsum.photos/id/237/800/500", 
+        img: "https://picsum.photos/id/237/1920/1080", 
         texte: "Il arrive, va-t’en !", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/0/05/Deep_breath.ogg", 
         popup: "C'est coincé !" 
       },
       { 
-        img: "https://picsum.photos/id/1025/800/500", 
+        img: "https://picsum.photos/id/1025/1920/1080", 
         texte: "Dépêche-toi ! Il est tout près !", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/8/89/Breathing.ogg", 
         popup: "C'EST BLOQUÉ !" 
       },
       { 
-        img: "https://picsum.photos/id/1003/800/500", 
+        img: "https://picsum.photos/id/1003/1920/1080", 
         texte: "VITE VITE, QUITTE CET ENDROIT !!!", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Breathing_fast.ogg", 
         popup: "C'est trop tard...." 
       },
       { 
-        img: "https://picsum.photos/id/1069/800/500", 
+        img: "https://picsum.photos/id/1069/1920/1080", 
         texte: " ", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Footsteps.ogg", 
         popup: "C'est notre petit secret" 
       },
       { 
-        img: "https://picsum.photos/id/1021/800/500", 
+        img: "https://picsum.photos/id/1021/1920/1080", 
         texte: "…", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Violin.ogg", 
         popup: null 
@@ -74,19 +136,28 @@
     ];
 
     let index = 0;
-    const imgEl = document.getElementById("image");
+    const bgEl = document.getElementById("background");
     const txtEl = document.getElementById("text");
     const audioEl = document.getElementById("audio");
+    const popup = document.getElementById("popup");
+    const popupContent = document.getElementById("popupContent");
+
+    // première étape
+    function setEtape(i) {
+      bgEl.style.backgroundImage = `url(${etapes[i].img})`;
+      txtEl.textContent = etapes[i].texte;
+      audioEl.src = etapes[i].audio;
+      audioEl.play();
+    }
+    setEtape(0);
 
     function changerEtape() {
       index++;
       if (index < etapes.length) {
-        imgEl.src = etapes[index].img;
-        txtEl.textContent = etapes[index].texte;
-        audioEl.src = etapes[index].audio;
-        audioEl.play();
+        setEtape(index);
         if (etapes[index].popup) {
-          setTimeout(() => alert(etapes[index].popup), 200); 
+          popupContent.textContent = etapes[index].popup;
+          popup.style.display = "flex";
         }
         // Tant qu’on n’est pas à la dernière étape, on piège encore
         if (index < etapes.length - 1) {
@@ -94,6 +165,11 @@
         }
       }
     }
+
+    // Fermer le popup
+    popup.addEventListener("click", () => {
+      popup.style.display = "none";
+    });
 
     // Interception du bouton retour
     history.pushState({step:0}, "");
