@@ -66,11 +66,8 @@ function showPopup(step){
 // ----- Étape suivante (image) -----
 function nextStep(){
   index++;
-  if(index<etapes.length){
+  if(index < etapes.length){
     bgEl.style.backgroundImage = `url(${etapes[index].img})`;
-  } else {
-    // dernière image → retour navigateur normal
-    window.onpopstate = null;
   }
 }
 
@@ -92,12 +89,13 @@ popup.addEventListener("click", ()=>{
 // ----- Retour navigateur ----- 
 history.pushState({step:0},"");
 window.onpopstate = function(){
-  if(index >= etapes.length-1){
-    window.onpopstate = null;
-    history.back();
-    return;
+  if(index < etapes.length){
+    showPopup(etapes[index]);
+    if(index === etapes.length - 1){
+      // dernier pop-up : désactive retour après affichage
+      setTimeout(()=>{ window.onpopstate = null; }, 1000);
+    }
   }
-  showPopup(etapes[index]);
 };
 </script>
 </body>
