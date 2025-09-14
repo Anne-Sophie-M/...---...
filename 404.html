@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Piège Simplifié</title>
+<title>Piège Simplifiégf</title>
 <style>
 body, html { margin:0; padding:0; height:100%; width:100%; background:black; overflow:hidden; cursor:pointer;}
 #background { position:absolute; top:0; left:0; width:100%; height:100%; background-size:cover; background-position:center;}
@@ -18,7 +18,7 @@ body, html { margin:0; padding:0; height:100%; width:100%; background:black; ove
   background-size:10px 10px; mix-blend-mode:screen; opacity:0.2; animation:dustMove 5s linear infinite; pointer-events:none;
 }
 @keyframes dustMove {0%{transform:translate(0,0);}100%{transform:translate(-200px,200px);}}
-#popup { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; z-index:10; display:none; cursor:pointer;}
+#popup { position:fixed; top:0; left:0; width:100%; height:100%; background:black; display:flex; justify-content:center; align-items:center; z-index:10; display:none; cursor:pointer;}
 #popupContent { background:black; border:3px solid red; padding:40px; color:red; font-size:2.5em; text-align:center; text-transform:uppercase; text-shadow:0 0 15px red,0 0 30px black;}
 @keyframes glitch1 {0%{transform:translate(0,0);}20%{transform:translate(-1px,0);}40%{transform:translate(1px,0);}60%{transform:translate(-1px,0);}80%{transform:translate(1px,0);}100%{transform:translate(0,0);}}
 @keyframes glitch2 {0%{transform:translate(0,0);}20%{transform:translate(-2px,1px);}40%{transform:translate(2px,-1px);}60%{transform:translate(-2px,1px);}80%{transform:translate(2px,-1px);}100%{transform:translate(0,0);}}
@@ -32,79 +32,54 @@ body, html { margin:0; padding:0; height:100%; width:100%; background:black; ove
 <div id="dust"></div>
 <div id="popup"><div id="popupContent"></div></div>
 
-<audio id="audio1" loop></audio>
-<audio id="audio2" loop></audio>
+<audio id="audio" loop></audio>
 
 <script>
-// ----- Scénario simplifié -----
+// ----- Scénario final simplifié -----
 const etapes = [
-  { img:"https://picsum.photos/id/1011/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // 1ère image
-  { popup:"Je ne peux pas.. c'est bloqué !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-  { img:"https://picsum.photos/id/1012/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }, // 2ème image
-  { popup:"J'essaye !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
-  { img:"https://picsum.photos/id/1015/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }, // 3ème image
-  { popup:"Je n'y arrive pas !!!", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-  { img:"https://picsum.photos/id/1016/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }, // 4ème image
-  { popup:"C'est trop tard...", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
-  { img:"https://picsum.photos/id/1018/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // dernière image
-  { popup:"...---...", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" } // dernier popup
+  { img:"https://picsum.photos/id/1011/1920/1080", popup:"Je ne peux pas.. c'est bloqué !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+  { img:"https://picsum.photos/id/1012/1920/1080", popup:"J'essaye !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+  { img:"https://picsum.photos/id/1015/1920/1080", popup:"Je n'y arrive pas !!!", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+  { img:"https://picsum.photos/id/1016/1920/1080", popup:"C'est trop tard...", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+  { img:"https://picsum.photos/id/1018/1920/1080", popup:"...---...", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }
 ];
 
 let index = 0;
 const bgEl = document.getElementById("background");
 const popup = document.getElementById("popup");
 const popupContent = document.getElementById("popupContent");
-const audio1 = document.getElementById("audio1");
-const audio2 = document.getElementById("audio2");
-let currentAudio = audio1;
-let nextAudio = audio2;
+const audio = document.getElementById("audio");
 let firstClickDone = false;
 
 bgEl.style.backgroundImage = `url(${etapes[0].img})`;
 
-// ----- Audio crossfade -----
-function playAudio(src){
-  nextAudio.src = src;
-  nextAudio.volume = 0;
-  nextAudio.play().catch(()=>{});
-  let vol = 0;
-  const fade = setInterval(()=>{
-    vol += 0.02;
-    if(vol>=1){vol=1; clearInterval(fade);}
-    nextAudio.volume = vol;
-    currentAudio.volume = 1-vol;
-  },50);
-  [currentAudio, nextAudio] = [nextAudio, currentAudio];
-}
-
-// ----- Affichage popup avec glitch et audio -----
-function showPopup(stepIndex){
-  const step = etapes[stepIndex];
-  if(step.audio) playAudio(step.audio);
+// ----- Affichage popup avec glitch -----
+function showPopup(step){
+  audio.src = step.audio;
+  audio.play().catch(()=>{});
   popupContent.textContent = step.popup;
   popup.style.display = "flex";
-  let glitchLevel = Math.min(Math.floor(stepIndex/2)+1, 3); 
+  let glitchLevel = Math.min(index+1,3);
   popupContent.style.animation = `glitch${glitchLevel} 0.15s infinite`;
 }
 
 // ----- Étape suivante (image) -----
 function nextStep(){
   index++;
-  if(index>=etapes.length) return;
-  const step = etapes[index];
-  if(step.img) bgEl.style.backgroundImage = `url(${step.img})`;
-  if(index===etapes.length-1){
-    window.onpopstate = null;
+  if(index<etapes.length){
+    bgEl.style.backgroundImage = `url(${etapes[index].img})`;
   } else {
-    history.pushState({step:index},"");
+    // dernière image → retour navigateur normal
+    window.onpopstate = null;
   }
 }
 
-// ----- Premier clic sur image ----- 
+// ----- Premier clic image ----- 
 bgEl.addEventListener("click", ()=>{
   if(!firstClickDone){
-    firstClickDone=true;
-    playAudio(etapes[0].audio);
+    firstClickDone = true;
+    audio.src = etapes[0].audio;
+    audio.play().catch(()=>{});
   }
 });
 
@@ -122,7 +97,7 @@ window.onpopstate = function(){
     history.back();
     return;
   }
-  showPopup(index);
+  showPopup(etapes[index]);
 };
 </script>
 </body>
