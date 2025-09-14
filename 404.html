@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Pièges</title>
+<title>Piège</title>
 <style>
 body, html { margin:0; padding:0; height:100%; width:100%; background:black; overflow:hidden; cursor:pointer;}
 #background { position:absolute; top:0; left:0; width:100%; height:100%; background-size:cover; background-position:center; opacity:1; transition:opacity 0.3s ease-out; filter:contrast(1.2) brightness(0.9);}
@@ -10,9 +10,10 @@ body, html { margin:0; padding:0; height:100%; width:100%; background:black; ove
 @keyframes grainMove {0%{transform:translate(0,0);}20%{transform:translate(-4px,2px);}40%{transform:translate(3px,-2px);}60%{transform:translate(-2px,1px);}80%{transform:translate(2px,-1px);}100%{transform:translate(0,0);}}
 #popup { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; z-index:10; display:none; cursor:pointer;}
 #popupContent { background:black; border:3px solid red; padding:40px; color:red; font-size:2.5em; text-align:center; text-transform:uppercase; text-shadow:0 0 15px red,0 0 30px black;}
-@keyframes glitch1 {0%{transform:translate(0,0);}20%{transform:translate(-2px,1px);}40%{transform:translate(2px,-1px);}60%{transform:translate(-1px,-2px);}80%{transform:translate(1px,2px);}100%{transform:translate(0,0);}}
-@keyframes glitch2 {0%{transform:translate(0,0);}20%{transform:translate(-3px,2px);}40%{transform:translate(3px,-2px);}60%{transform:translate(-2px,-3px);}80%{transform:translate(2,3px);}100%{transform:translate(0,0);}}
-@keyframes glitch3 {0%{transform:translate(0,0);}20%{transform:translate(-4px,2px);}40%{transform:translate(4px,-3px);}60%{transform:translate(-3px,-4px);}80%{transform:translate(3,4px);}100%{transform:translate(0,0);}}
+/* glitch progressif */
+@keyframes glitch1 {0%{transform:translate(0,0);}20%{transform:translate(-1px,0);}40%{transform:translate(1px,0);}60%{transform:translate(-1px,0);}80%{transform:translate(1px,0);}100%{transform:translate(0,0);}}
+@keyframes glitch2 {0%{transform:translate(0,0);}20%{transform:translate(-2px,1px);}40%{transform:translate(2px,-1px);}60%{transform:translate(-2px,1px);}80%{transform:translate(2px,-1px);}100%{transform:translate(0,0);}}
+@keyframes glitch3 {0%{transform:translate(0,0);}20%{transform:translate(-4px,2px);}40%{transform:translate(4px,-2px);}60%{transform:translate(-4px,2px);}80%{transform:translate(4px,-2px);}100%{transform:translate(0,0);}}
 </style>
 </head>
 <body>
@@ -47,11 +48,11 @@ const audio1 = document.getElementById("audio1");
 const audio2 = document.getElementById("audio2");
 let currentAudio = audio1;
 let nextAudio = audio2;
-
 let firstClickDone = false;
+
 bgEl.style.backgroundImage = `url(${etapes[0].img})`;
 
-// ----- Fonctions audio -----
+// ----- Audio -----
 function playAudio(src){
   nextAudio.src = src;
   nextAudio.volume = 0;
@@ -66,7 +67,7 @@ function playAudio(src){
   [currentAudio, nextAudio] = [nextAudio, currentAudio];
 }
 
-// ----- Fonctions image -----
+// ----- Image -----
 function fadeOut(callback){
   bgEl.style.transition = "opacity 0.3s ease-out";
   bgEl.style.opacity=0;
@@ -78,15 +79,22 @@ function fadeIn(src){
   bgEl.style.opacity=1;
 }
 
-// ----- Popup -----
+// ----- Popup + glitch + grain -----
 function showPopup(stepIndex){
   const step = etapes[stepIndex];
   fadeOut(()=>{
     if(step.audio) playAudio(step.audio);
     popupContent.textContent = step.popup || "C'est coincé !";
     popup.style.display = "flex";
-    let gIndex = Math.min(stepIndex, glitches.length-1);
-    popupContent.style.animation = `${glitches[gIndex]} 0.15s infinite`;
+    // glitch progressif
+    let glitchLevel = Math.min(stepIndex, 3); 
+    popupContent.style.animation = `glitch${glitchLevel} 0.15s infinite`;
+    // grain progressif
+    let grainOpacity = Math.min(0.2 + 0.08*stepIndex, 0.7);
+    let grainSpeed = Math.max(1 - 0.05*stepIndex, 0.2);
+    const grain = document.getElementById("grain");
+    grain.style.opacity = grainOpacity;
+    grain.style.animationDuration = grainSpeed+"s";
   });
 }
 
@@ -97,13 +105,13 @@ function nextStep(){
   const step = etapes[index];
   if(step.img) fadeIn(step.img);
   if(index===etapes.length-1){
-    window.onpopstate = null; // dernier retour normal
+    window.onpopstate = null;
   } else {
     history.pushState({step:index},"");
   }
 }
 
-// ----- Premier clic image -----
+// ----- Premier clic -----
 bgEl.addEventListener("click", ()=>{
   if(!firstClickDone){
     firstClickDone=true;
@@ -122,7 +130,7 @@ history.pushState({step:0},"");
 window.onpopstate = function(){
   if(index >= etapes.length-1){
     window.onpopstate = null;
-    history.back(); // dernier retour normal
+    history.back();
     return;
   }
   showPopup(index);
