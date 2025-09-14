@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Piège Simplifié</title>
+<title>Piège Simfghplifié</title>
 <style>
 body, html { margin:0; padding:0; height:100%; width:100%; background:black; overflow:hidden; cursor:pointer;}
 #background { position:absolute; top:0; left:0; width:100%; height:100%; background-size:cover; background-position:center;}
@@ -90,20 +90,15 @@ popup.addEventListener("click", ()=>{
 });
 
 // ----- Bloquer le retour navigateur sur pop-ups -----
-
-// On pousse plusieurs états dès le départ pour bloquer le retour
-for(let i=0; i<5; i++){
-  history.pushState({step:0}, "");
-}
+history.replaceState({step:index}, "");
 
 window.onpopstate = function(e){
-  // Si on est sur un pop-up
   if(index < etapes.length){
     showPopup(etapes[index]);
-    // Repousser immédiatement un nouvel état pour rester bloqué
-    setTimeout(()=>{ history.pushState({step:index},""); }, 0);
+    // Repousse immédiatement le même état pour rester bloqué
+    history.replaceState({step:index}, "");
   } else {
-    // Dernière étape → retour navigateur normal
+    // Dernière étape → libère le vrai retour
     window.onpopstate = null;
   }
 };
