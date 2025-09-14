@@ -130,22 +130,25 @@ function playAudio(src) {
 }
 
 // Fade image
-function fadeToImage(src){
+function fadeOutImage(callback){
   bgEl.style.transition = "opacity 0.5s ease-out";
   bgEl.style.opacity = 0;
-  setTimeout(()=>{
-    bgEl.style.backgroundImage=`url(${src})`;
-    bgEl.style.transition = "opacity 1s ease-in";
-    bgEl.style.opacity = 1;
-  },500);
+  setTimeout(callback, 500);
+}
+function fadeInImage(src){
+  bgEl.style.backgroundImage = `url(${src})`;
+  bgEl.style.transition = "opacity 1s ease-in";
+  bgEl.style.opacity = 1;
 }
 
 // Popup
-function setPopup(text,level){
-  popupContent.textContent=text;
-  popup.style.display="flex";
-  let gIndex=Math.min(level, glitches.length-1);
-  popupContent.style.animation=`${glitches[gIndex]} 0.15s infinite`;
+function showPopup(text, level){
+  fadeOutImage(()=>{
+    popupContent.textContent=text;
+    popup.style.display="flex";
+    let gIndex=Math.min(level, glitches.length-1);
+    popupContent.style.animation=`${glitches[gIndex]} 0.15s infinite`;
+  });
 }
 
 // Next step
@@ -154,12 +157,10 @@ function nextStep(){
   if(index>=etapes.length) return;
   let step=etapes[index];
   if(step.audio) playAudio(step.audio);
-  if(step.img) fadeToImage(step.img);
-  if(step.popup) setPopup(step.popup,index);
+  if(step.img) fadeInImage(step.img);
   
-  // Si dernière image, on restaure le retour normal
   if(index===etapes.length-1){
-    window.onpopstate=null;
+    window.onpopstate=null; // retour normal à la fin
   }else{
     history.pushState({step:index},"");
   }
@@ -173,17 +174,19 @@ bgEl.addEventListener("click",()=>{
   }
 });
 
+// Interception retour navigateur = afficher popup si nécessaire
+history.pushState({step:0},"");
+window.onpopstate=function(e){
+  const step = etapes[index];
+  if(step.popup) showPopup(step.popup,index);
+  else nextStep();
+};
+
 // Clic popup -> fermer + avancer
 popup.addEventListener("click",()=>{
   popup.style.display="none";
   nextStep();
 });
-
-// Interception bouton retour
-history.pushState({step:0},"");
-window.onpopstate=function(e){
-  nextStep();
-};
 </script>
 
 </body>
