@@ -11,7 +11,6 @@
       width: 100%;
       background: black;
       overflow: hidden;
-      font-family: "Courier New", monospace;
     }
 
     /* Image plein écran */
@@ -24,17 +23,6 @@
       background-position: center;
       transition: background-image 1s ease-in-out;
       filter: contrast(1.2) brightness(0.9);
-    }
-
-    /* Texte sur l’image */
-    #text {
-      position: absolute;
-      bottom: 10%;
-      width: 100%;
-      text-align: center;
-      font-size: 3em;
-      color: red;
-      text-shadow: 0 0 10px black, 0 0 20px red;
     }
 
     /* Effet vieux projecteur : grain */
@@ -81,19 +69,38 @@
       text-align: center;
       text-transform: uppercase;
       text-shadow: 0 0 15px red, 0 0 30px black;
-      animation: pulse 1s infinite alternate;
-      max-width: 80%;
     }
-    @keyframes pulse {
-      from { transform: scale(1); opacity: 1; }
-      to { transform: scale(1.1); opacity: 0.7; }
+
+    /* Tremblement */
+    @keyframes shake1 {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-3px, 2px); }
+      40% { transform: translate(3px, -2px); }
+      60% { transform: translate(-3px, -2px); }
+      80% { transform: translate(3px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes shake2 {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-6px, 4px); }
+      40% { transform: translate(6px, -4px); }
+      60% { transform: translate(-6px, -4px); }
+      80% { transform: translate(6px, 4px); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes shake3 {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-10px, 6px); }
+      40% { transform: translate(10px, -6px); }
+      60% { transform: translate(-10px, -6px); }
+      80% { transform: translate(10px, 6px); }
+      100% { transform: translate(0, 0); }
     }
   </style>
 </head>
 <body>
   <div id="background"></div>
   <div id="grain"></div>
-  <div id="text">Il arrive, va-t’en !</div>
 
   <div id="popup">
     <div id="popupContent"></div>
@@ -105,31 +112,26 @@
     const etapes = [
       { 
         img: "https://picsum.photos/id/237/1920/1080", 
-        texte: "Il arrive, va-t’en !", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/0/05/Deep_breath.ogg", 
         popup: "C'est coincé !" 
       },
       { 
         img: "https://picsum.photos/id/1025/1920/1080", 
-        texte: "Dépêche-toi ! Il est tout près !", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/8/89/Breathing.ogg", 
         popup: "C'EST BLOQUÉ !" 
       },
       { 
         img: "https://picsum.photos/id/1003/1920/1080", 
-        texte: "VITE VITE, QUITTE CET ENDROIT !!!", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Breathing_fast.ogg", 
         popup: "C'est trop tard...." 
       },
       { 
         img: "https://picsum.photos/id/1069/1920/1080", 
-        texte: " ", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Footsteps.ogg", 
         popup: "C'est notre petit secret" 
       },
       { 
         img: "https://picsum.photos/id/1021/1920/1080", 
-        texte: "…", 
         audio: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Violin.ogg", 
         popup: null 
       }
@@ -137,15 +139,16 @@
 
     let index = 0;
     const bgEl = document.getElementById("background");
-    const txtEl = document.getElementById("text");
     const audioEl = document.getElementById("audio");
     const popup = document.getElementById("popup");
     const popupContent = document.getElementById("popupContent");
 
+    // animations de tremblement croissantes
+    const shakes = ["shake1", "shake2", "shake3"];
+
     // première étape
     function setEtape(i) {
       bgEl.style.backgroundImage = `url(${etapes[i].img})`;
-      txtEl.textContent = etapes[i].texte;
       audioEl.src = etapes[i].audio;
       audioEl.play();
     }
@@ -158,6 +161,10 @@
         if (etapes[index].popup) {
           popupContent.textContent = etapes[index].popup;
           popup.style.display = "flex";
+
+          // appliquer un tremblement de plus en plus fort
+          let shakeIndex = Math.min(index - 1, shakes.length - 1);
+          popupContent.style.animation = `${shakes[shakeIndex]} 0.5s infinite`;
         }
         // Tant qu’on n’est pas à la dernière étape, on piège encore
         if (index < etapes.length - 1) {
