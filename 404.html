@@ -88,15 +88,15 @@ body, html {
 
 <script>
 const etapes = [
-  { img:"https://picsum.photos/id/237/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // clic image
-  { img:null, popup:"C'est coincé !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }, // retour -> popup
-  { img:"https://picsum.photos/id/1025/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }, // fermer popup -> image
-  { img:null, popup:"C'EST BLOQUÉ !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }, // retour -> popup
-  { img:"https://picsum.photos/id/1003/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }, // fermer popup -> image triste
-  { img:null, popup:"C'est trop tard....", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }, // retour -> popup
-  { img:"https://picsum.photos/id/1069/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }, // fermer popup -> image
-  { img:null, popup:"C'est notre petit secret", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }, // retour -> popup
-  { img:"https://picsum.photos/id/1021/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // dernière image triste
+  { img:"https://picsum.photos/id/237/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, 
+  { img:null, popup:"C'est coincé !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+  { img:"https://picsum.photos/id/1025/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+  { img:null, popup:"C'EST BLOQUÉ !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+  { img:"https://picsum.photos/id/1003/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
+  { img:null, popup:"C'est trop tard....", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+  { img:"https://picsum.photos/id/1069/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+  { img:null, popup:"C'est notre petit secret", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+  { img:"https://picsum.photos/id/1021/1920/1080", popup:null, audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
 ];
 
 let index = 0;
@@ -112,6 +112,8 @@ let nextAudio = audio2;
 
 bgEl.style.backgroundImage = `url(${etapes[0].img})`;
 
+let firstClickDone = false;
+
 // Crossfade audio
 function playAudio(src) {
   nextAudio.src = src;
@@ -124,17 +126,18 @@ function playAudio(src) {
     nextAudio.volume = vol;
     currentAudio.volume = 1-vol;
   },50);
-  // swap
   let tmp=currentAudio; currentAudio=nextAudio; nextAudio=tmp;
 }
 
 // Fade image
-function setImage(src){
-  bgEl.style.opacity=0;
+function fadeToImage(src){
+  bgEl.style.transition = "opacity 0.5s ease-out";
+  bgEl.style.opacity = 0;
   setTimeout(()=>{
     bgEl.style.backgroundImage=`url(${src})`;
-    bgEl.style.opacity=1;
-  },300);
+    bgEl.style.transition = "opacity 1s ease-in";
+    bgEl.style.opacity = 1;
+  },500);
 }
 
 // Popup
@@ -151,14 +154,23 @@ function nextStep(){
   if(index>=etapes.length) return;
   let step=etapes[index];
   if(step.audio) playAudio(step.audio);
-  if(step.img) setImage(step.img);
+  if(step.img) fadeToImage(step.img);
   if(step.popup) setPopup(step.popup,index);
-  if(index<etapes.length-1) history.pushState({step:index},"");
+  
+  // Si dernière image, on restaure le retour normal
+  if(index===etapes.length-1){
+    window.onpopstate=null;
+  }else{
+    history.pushState({step:index},"");
+  }
 }
 
-// Premier clic image -> lancer audio initial
+// Premier clic image -> lancer audio initial et bloquer les clics suivants
 bgEl.addEventListener("click",()=>{
-  if(index===0) playAudio(etapes[0].audio);
+  if(!firstClickDone){
+    firstClickDone = true;
+    playAudio(etapes[0].audio);
+  }
 });
 
 // Clic popup -> fermer + avancer
@@ -167,7 +179,7 @@ popup.addEventListener("click",()=>{
   nextStep();
 });
 
-// Retour navigateur
+// Interception bouton retour
 history.pushState({step:0},"");
 window.onpopstate=function(e){
   nextStep();
