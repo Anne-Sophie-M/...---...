@@ -5,32 +5,23 @@
 <title>Piège</title>
 <style>
 body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
+  margin: 0; padding: 0;
+  height: 100%; width: 100%;
   background: black;
   overflow: hidden;
   cursor: pointer;
 }
-
 #background {
-  position: absolute;
-  top:0; left:0;
-  width:100%;
-  height:100%;
-  background-size: cover;
-  background-position: center;
+  position: absolute; top:0; left:0;
+  width:100%; height:100%;
+  background-size: cover; background-position: center;
   opacity: 1;
-  transition: opacity 1s ease-in-out;
+  transition: opacity 0.5s ease-out;
   filter: contrast(1.2) brightness(0.9);
 }
-
 #grain {
-  position: absolute;
-  top:0; left:0;
-  width:100%;
-  height:100%;
+  position: absolute; top:0; left:0;
+  width:100%; height:100%;
   background: url('https://i.imgur.com/9l9bU.jpg');
   background-size: cover;
   mix-blend-mode: overlay;
@@ -39,19 +30,15 @@ body, html {
   pointer-events: none;
 }
 @keyframes grainMove {
-  0%{transform:translate(0,0);} 20%{transform:translate(-4px,2px);} 40%{transform:translate(3px,-2px);}
-  60%{transform:translate(-2px,1px);} 80%{transform:translate(2px,-1px);} 100%{transform:translate(0,0);}
+  0%{transform:translate(0,0);} 20%{transform:translate(-4px,2px);}
+  40%{transform:translate(3px,-2px);} 60%{transform:translate(-2px,1px);}
+  80%{transform:translate(2px,-1px);} 100%{transform:translate(0,0);}
 }
-
 #popup {
-  position: fixed;
-  top:0; left:0;
-  width:100%;
-  height:100%;
+  position: fixed; top:0; left:0;
+  width:100%; height:100%;
   background: rgba(0,0,0,0.9);
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  display: flex; justify-content:center; align-items:center;
   z-index:10;
   display:none;
   cursor:pointer;
@@ -78,7 +65,6 @@ body, html {
 
 <div id="background"></div>
 <div id="grain"></div>
-
 <div id="popup">
   <div id="popupContent"></div>
 </div>
@@ -104,46 +90,43 @@ const bgEl = document.getElementById("background");
 const popup = document.getElementById("popup");
 const popupContent = document.getElementById("popupContent");
 const glitches = ["glitch1","glitch2","glitch3"];
-
 const audio1 = document.getElementById("audio1");
 const audio2 = document.getElementById("audio2");
 let currentAudio = audio1;
 let nextAudio = audio2;
-
 bgEl.style.backgroundImage = `url(${etapes[0].img})`;
-
 let firstClickDone = false;
 
-// Crossfade audio
-function playAudio(src) {
+// ---------- Audio ----------
+function playAudio(src){
   nextAudio.src = src;
   nextAudio.volume = 0;
   nextAudio.play().catch(()=>{});
-  let vol = 0;
-  const fade = setInterval(()=>{
+  let vol=0;
+  const fade=setInterval(()=>{
     vol+=0.02;
     if(vol>=1){vol=1; clearInterval(fade);}
-    nextAudio.volume = vol;
-    currentAudio.volume = 1-vol;
+    nextAudio.volume=vol;
+    currentAudio.volume=1-vol;
   },50);
-  let tmp=currentAudio; currentAudio=nextAudio; nextAudio=tmp;
+  [currentAudio,nextAudio]=[nextAudio,currentAudio];
 }
 
-// Fade image
-function fadeOutImage(callback){
-  bgEl.style.transition = "opacity 0.5s ease-out";
-  bgEl.style.opacity = 0;
-  setTimeout(callback, 500);
+// ---------- Images ----------
+function fadeOut(callback){
+  bgEl.style.transition="opacity 0.3s ease-out";
+  bgEl.style.opacity=0;
+  setTimeout(callback,300);
 }
-function fadeInImage(src){
-  bgEl.style.backgroundImage = `url(${src})`;
-  bgEl.style.transition = "opacity 1s ease-in";
-  bgEl.style.opacity = 1;
+function fadeIn(src){
+  bgEl.style.backgroundImage=`url(${src})`;
+  bgEl.style.transition="opacity 1s ease-in";
+  bgEl.style.opacity=1;
 }
 
-// Popup
+// ---------- Popup ----------
 function showPopup(text, level){
-  fadeOutImage(()=>{
+  fadeOut(()=>{
     popupContent.textContent=text;
     popup.style.display="flex";
     let gIndex=Math.min(level, glitches.length-1);
@@ -151,43 +134,44 @@ function showPopup(text, level){
   });
 }
 
-// Next step
+// ---------- Étape suivante ----------
 function nextStep(){
   index++;
   if(index>=etapes.length) return;
-  let step=etapes[index];
+  const step = etapes[index];
   if(step.audio) playAudio(step.audio);
-  if(step.img) fadeInImage(step.img);
-  
+  if(step.img) fadeIn(step.img);
   if(index===etapes.length-1){
-    window.onpopstate=null; // retour normal à la fin
-  }else{
+    window.onpopstate=null; // dernier retour normal
+  } else {
     history.pushState({step:index},"");
   }
 }
 
-// Premier clic image -> lancer audio initial et bloquer les clics suivants
+// ---------- Premier clic image ----------
 bgEl.addEventListener("click",()=>{
   if(!firstClickDone){
-    firstClickDone = true;
+    firstClickDone=true;
     playAudio(etapes[0].audio);
   }
 });
 
-// Interception retour navigateur = afficher popup si nécessaire
-history.pushState({step:0},"");
-window.onpopstate=function(e){
-  const step = etapes[index];
-  if(step.popup) showPopup(step.popup,index);
-  else nextStep();
-};
-
-// Clic popup -> fermer + avancer
+// ---------- Clic popup ----------
 popup.addEventListener("click",()=>{
   popup.style.display="none";
   nextStep();
 });
-</script>
 
+// ---------- Retour navigateur ----------
+history.pushState({step:0},"");
+window.onpopstate=function(){
+  const step = etapes[index];
+  if(step.popup){
+    showPopup(step.popup,index); // fade-out image + popup
+  }else{
+    nextStep();
+  }
+};
+</script>
 </body>
 </html>
