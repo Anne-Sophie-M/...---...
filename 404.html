@@ -11,9 +11,9 @@
       width: 100%;
       background: black;
       overflow: hidden;
+      cursor: pointer; /* on suggère de cliquer */
     }
 
-    /* Image plein écran */
     #background {
       position: absolute;
       top: 0; left: 0;
@@ -21,11 +21,11 @@
       height: 100%;
       background-size: cover;
       background-position: center;
-      transition: background-image 0.8s ease-in-out;
+      transition: opacity 0.8s ease-in-out;
+      opacity: 1;
       filter: contrast(1.2) brightness(0.9);
     }
 
-    /* Effet vieux projecteur : grain */
     #grain {
       position: absolute;
       top: 0; left: 0;
@@ -47,7 +47,6 @@
       100% { transform: translate(0,0); }
     }
 
-    /* Popup personnalisé */
     #popup {
       position: fixed;
       top: 0; left: 0;
@@ -59,6 +58,7 @@
       align-items: center;
       z-index: 10;
       display: none;
+      cursor: pointer;
     }
     #popupContent {
       background: black;
@@ -71,7 +71,6 @@
       text-shadow: 0 0 15px red, 0 0 30px black;
     }
 
-    /* Glitch shakes (faible rayon mais rapide) */
     @keyframes glitch1 {
       0% { transform: translate(0, 0); }
       20% { transform: translate(-2px, 1px); }
@@ -106,35 +105,15 @@
     <div id="popupContent"></div>
   </div>
   
-  <audio id="audio" autoplay loop></audio>
+  <audio id="audio"></audio>
 
   <script>
     const etapes = [
-      { 
-        img: "https://picsum.photos/id/237/1920/1080", 
-        audio: "https://upload.wikimedia.org/wikipedia/commons/0/05/Deep_breath.ogg", 
-        popup: "C'est coincé !" 
-      },
-      { 
-        img: "https://picsum.photos/id/1025/1920/1080", 
-        audio: "https://upload.wikimedia.org/wikipedia/commons/8/89/Breathing.ogg", 
-        popup: "C'EST BLOQUÉ !" 
-      },
-      { 
-        img: "https://picsum.photos/id/1003/1920/1080", 
-        audio: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Breathing_fast.ogg", 
-        popup: "C'est trop tard...." 
-      },
-      { 
-        img: "https://picsum.photos/id/1069/1920/1080", 
-        audio: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Footsteps.ogg", 
-        popup: "C'est notre petit secret" 
-      },
-      { 
-        img: "https://picsum.photos/id/1021/1920/1080", 
-        audio: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Violin.ogg", 
-        popup: null 
-      }
+      { img: "https://picsum.photos/id/237/1920/1080", popup: null, audio: "https://upload.wikimedia.org/wikipedia/commons/0/05/Deep_breath.ogg" }, // clic image
+      { img: null, popup: "C'est coincé !", audio: "https://upload.wikimedia.org/wikipedia/commons/8/89/Breathing.ogg" }, // retour -> popup
+      { img: "https://picsum.photos/id/1025/1920/1080", popup: null, audio: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Breathing_fast.ogg" }, // fermer popup -> image
+      { img: null, popup: "C'EST BLOQUÉ !", audio: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Footsteps.ogg" }, // retour -> popup
+      { img: "https://picsum.photos/id/1003/1920/1080", popup: null, audio: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Violin.ogg" }, // fermer popup -> image triste
     ];
 
     let index = 0;
@@ -145,47 +124,65 @@
 
     const glitches = ["glitch1", "glitch2", "glitch3"];
 
-    // première étape (affiche l'image et son)
-    function setEtape(i) {
-      bgEl.style.backgroundImage = `url(${etapes[i].img})`;
-      audioEl.src = etapes[i].audio;
-      audioEl.play();
+    // Première image affichée directement
+    bgEl.style.backgroundImage = `url(${etapes[0].img})`;
+
+    function playAudio(src) {
+      audioEl.src = src;
+      audioEl.play().catch(()=>{});
     }
-    setEtape(0);
 
-    function changerEtape() {
+    function setImage(src) {
+      bgEl.style.opacity = 0;
+      setTimeout(() => {
+        bgEl.style.backgroundImage = `url(${src})`;
+        bgEl.style.opacity = 1;
+      }, 300);
+    }
+
+    function setPopup(text, level) {
+      popupContent.textContent = text;
+      popup.style.display = "flex";
+      let gIndex = Math.min(level, glitches.length - 1);
+      popupContent.style.animation = `${glitches[gIndex]} 0.15s infinite`;
+    }
+
+    function nextStep() {
       index++;
-      if (index < etapes.length) {
-        // afficher d'abord le popup
-        if (etapes[index].popup) {
-          popupContent.textContent = etapes[index].popup;
-          popup.style.display = "flex";
+      if (index >= etapes.length) return;
 
-          // applique un glitch qui augmente
-          let gIndex = Math.min(index - 1, glitches.length - 1);
-          popupContent.style.animation = `${glitches[gIndex]} 0.15s infinite`;
-        } else {
-          // dernière étape sans popup → affiche directement l'image
-          setEtape(index);
-        }
+      let step = etapes[index];
+      if (step.audio) playAudio(step.audio);
 
-        // Tant qu’on n’est pas à la dernière étape, on piège encore
-        if (index < etapes.length - 1) {
-          history.pushState({step:index}, "");
-        }
+      if (step.img) {
+        setImage(step.img);
+      }
+      if (step.popup) {
+        setPopup(step.popup, index);
+      }
+
+      if (index < etapes.length - 1) {
+        history.pushState({step:index}, "");
       }
     }
 
-    // Fermer le popup => seulement à ce moment on change l'image et l'audio
-    popup.addEventListener("click", () => {
-      popup.style.display = "none";
-      setEtape(index);
+    // Premier clic sur l'image = lancer le son initial
+    bgEl.addEventListener("click", () => {
+      if (index === 0) {
+        playAudio(etapes[0].audio);
+      }
     });
 
-    // Interception du bouton retour
+    // Clic sur popup = fermer et passer à l’image suivante
+    popup.addEventListener("click", () => {
+      popup.style.display = "none";
+      nextStep();
+    });
+
+    // Bouton retour = passe à l’étape suivante
     history.pushState({step:0}, "");
     window.onpopstate = function(e) {
-      changerEtape();
+      nextStep();
     };
   </script>
 </body>
