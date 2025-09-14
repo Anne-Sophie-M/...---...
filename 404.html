@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Piège Simplifié</title>
+<title>Piège avec sortie finale</title>
 <style>
 body, html { margin:0; padding:0; height:100%; width:100%; background:black; overflow:hidden; cursor:pointer;}
 #background { position:absolute; top:0; left:0; width:100%; height:100%; background-size:cover; background-position:center;}
@@ -35,7 +35,7 @@ body, html { margin:0; padding:0; height:100%; width:100%; background:black; ove
 <audio id="audio" loop></audio>
 
 <script>
-// ----- Scénario final simplifié -----
+// ----- Scénario final -----
 const etapes = [
   { img:"https://picsum.photos/id/1011/1920/1080", popup:"Je ne peux pas.. c'est bloqué !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
   { img:"https://picsum.photos/id/1012/1920/1080", popup:"J'essaye !", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
@@ -43,6 +43,12 @@ const etapes = [
   { img:"https://picsum.photos/id/1016/1920/1080", popup:"C'est trop tard...", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
   { img:"https://picsum.photos/id/1018/1920/1080", popup:"...---...", audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }
 ];
+
+// Étape finale (après dernier pop-up)
+const etapeFinale = {
+  img:"https://picsum.photos/id/1025/1920/1080", // image triste finale
+  audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" // audio triste final
+};
 
 let index = 0;
 const bgEl = document.getElementById("background");
@@ -68,6 +74,13 @@ function nextStep(){
   index++;
   if(index < etapes.length){
     bgEl.style.backgroundImage = `url(${etapes[index].img})`;
+  } else {
+    // Après le dernier pop-up : affiche image + audio finale
+    bgEl.style.backgroundImage = `url(${etapeFinale.img})`;
+    audio.src = etapeFinale.audio;
+    audio.play().catch(()=>{});
+    // libère le vrai retour
+    window.onpopstate = null;
   }
 }
 
@@ -86,14 +99,17 @@ popup.addEventListener("click", ()=>{
   nextStep();
 });
 
-// ----- Retour navigateur ----- 
+// ----- Empêcher sortie avec "Retour" -----
 history.pushState({step:0},"");
 window.onpopstate = function(){
   if(index < etapes.length){
     showPopup(etapes[index]);
+
     if(index === etapes.length - 1){
-      // dernier pop-up : désactive retour après affichage
-      setTimeout(()=>{ window.onpopstate = null; }, 1000);
+      // le prochain clic fermera le dernier popup → affichera image finale et libèrera retour
+    } else {
+      // sinon on repousse encore une entrée dans l'historique
+      history.pushState({step:index},"");
     }
   }
 };
