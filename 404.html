@@ -21,7 +21,7 @@
       height: 100%;
       background-size: cover;
       background-position: center;
-      transition: background-image 1s ease-in-out;
+      transition: background-image 0.8s ease-in-out;
       filter: contrast(1.2) brightness(0.9);
     }
 
@@ -40,10 +40,10 @@
     }
     @keyframes grainMove {
       0% { transform: translate(0,0); }
-      20% { transform: translate(-10px,5px); }
-      40% { transform: translate(5px,-5px); }
-      60% { transform: translate(-5px,5px); }
-      80% { transform: translate(5px,0); }
+      20% { transform: translate(-4px,2px); }
+      40% { transform: translate(3px,-2px); }
+      60% { transform: translate(-2px,1px); }
+      80% { transform: translate(2px,-1px); }
       100% { transform: translate(0,0); }
     }
 
@@ -53,7 +53,7 @@
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.9);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -71,29 +71,29 @@
       text-shadow: 0 0 15px red, 0 0 30px black;
     }
 
-    /* Tremblement */
-    @keyframes shake1 {
+    /* Glitch shakes (faible rayon mais rapide) */
+    @keyframes glitch1 {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-2px, 1px); }
+      40% { transform: translate(2px, -1px); }
+      60% { transform: translate(-1px, -2px); }
+      80% { transform: translate(1px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes glitch2 {
       0% { transform: translate(0, 0); }
       20% { transform: translate(-3px, 2px); }
       40% { transform: translate(3px, -2px); }
-      60% { transform: translate(-3px, -2px); }
-      80% { transform: translate(3px, 2px); }
+      60% { transform: translate(-2px, -3px); }
+      80% { transform: translate(2px, 3px); }
       100% { transform: translate(0, 0); }
     }
-    @keyframes shake2 {
+    @keyframes glitch3 {
       0% { transform: translate(0, 0); }
-      20% { transform: translate(-6px, 4px); }
-      40% { transform: translate(6px, -4px); }
-      60% { transform: translate(-6px, -4px); }
-      80% { transform: translate(6px, 4px); }
-      100% { transform: translate(0, 0); }
-    }
-    @keyframes shake3 {
-      0% { transform: translate(0, 0); }
-      20% { transform: translate(-10px, 6px); }
-      40% { transform: translate(10px, -6px); }
-      60% { transform: translate(-10px, -6px); }
-      80% { transform: translate(10px, 6px); }
+      20% { transform: translate(-4px, 2px); }
+      40% { transform: translate(4px, -3px); }
+      60% { transform: translate(-3px, -4px); }
+      80% { transform: translate(3px, 4px); }
       100% { transform: translate(0, 0); }
     }
   </style>
@@ -143,10 +143,9 @@
     const popup = document.getElementById("popup");
     const popupContent = document.getElementById("popupContent");
 
-    // animations de tremblement croissantes
-    const shakes = ["shake1", "shake2", "shake3"];
+    const glitches = ["glitch1", "glitch2", "glitch3"];
 
-    // première étape
+    // première étape (affiche l'image et son)
     function setEtape(i) {
       bgEl.style.backgroundImage = `url(${etapes[i].img})`;
       audioEl.src = etapes[i].audio;
@@ -157,15 +156,19 @@
     function changerEtape() {
       index++;
       if (index < etapes.length) {
-        setEtape(index);
+        // afficher d'abord le popup
         if (etapes[index].popup) {
           popupContent.textContent = etapes[index].popup;
           popup.style.display = "flex";
 
-          // appliquer un tremblement de plus en plus fort
-          let shakeIndex = Math.min(index - 1, shakes.length - 1);
-          popupContent.style.animation = `${shakes[shakeIndex]} 0.5s infinite`;
+          // applique un glitch qui augmente
+          let gIndex = Math.min(index - 1, glitches.length - 1);
+          popupContent.style.animation = `${glitches[gIndex]} 0.15s infinite`;
+        } else {
+          // dernière étape sans popup → affiche directement l'image
+          setEtape(index);
         }
+
         // Tant qu’on n’est pas à la dernière étape, on piège encore
         if (index < etapes.length - 1) {
           history.pushState({step:index}, "");
@@ -173,9 +176,10 @@
       }
     }
 
-    // Fermer le popup
+    // Fermer le popup => seulement à ce moment on change l'image et l'audio
     popup.addEventListener("click", () => {
       popup.style.display = "none";
+      setEtape(index);
     });
 
     // Interception du bouton retour
