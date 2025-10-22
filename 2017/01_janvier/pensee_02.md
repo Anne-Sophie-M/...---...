@@ -1,3 +1,0 @@
-# Pensée 02 — Janvier 2017
-
-Aujourd’hui, j’ai passé du temps à dessiner. Je faisais des formes bizarres qui n’existent pas dans ce monde, des lignes qui se tordaient et des couleurs qui n’allaient pas ensemble. Quand je regardais ce que j’avais fait, j’avais l’impression d’être un peu comme elles, un peu à part, un peu étrange, mais ça me faisait sourire. C’était drôle et un peu triste en même temps, comme si mes dessins savaient des choses que personne d’autre ne pouvait comprendre. Parfois, je m’arrêtais et je les regardais longtemps, juste pour sentir cette sensation étrange de me reconnaître dans ce que je créais. Et puis je recommençais, encore et encore, jusqu’à ce que mes doigts soient couverts de couleurs et que le papier devienne un petit monde à moi.
