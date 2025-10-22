@@ -1,190 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>RUST9</title>
-  <link rel="stylesheet" href="style.css">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rust9</title>
   <style>
-    body {
+    /* reset */
+    html,body {
+      height: 100%;
       margin: 0;
-      padding: 0;
-      font-family: monospace;
+    }
+
+    /* container qui occupe tout l'écran */
+    .fullscreen {
+      width: 100vw;
       height: 100vh;
-      background-color: black;
-      color: white;
       overflow: hidden;
-      position: relative;
-    }
-
-    .image-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      max-width: 1920px;
-    }
-
-    #bg-image {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .hotspot {
-      position: absolute;
-      cursor: pointer;
-      background: rgba(255,0,0,0);
-      z-index: 10;
-    }
-
-    .center {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      text-align: center;
-    }
-
-    /* Password popup */
-    #password-popup {
-      position: fixed;
-      top:0;
-      left:0;
-      width:100%;
-      height:100%;
-      background: rgba(0,0,0,1);
       display: flex;
-      justify-content: center;
       align-items: center;
-      z-index: 999;
-      flex-direction: column;
-      color: white;
+      justify-content: center;
+      background: black;
     }
-
-    #password-popup input {
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      margin-top: 10px;
-    }
-
-    #password-popup button {
-      margin-top: 10px;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      cursor: pointer;
+    .fullscreen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
   </style>
 </head>
 <body>
-  <!-- Password popup -->
-  <div id="password-popup">
-    <h2>Enter password</h2>
-    <input type="password" id="pwd-input" placeholder="Password">
-    <button id="pwd-button">Enter</button>
+  <div class="fullscreen">
+    <img src="images/background.jpg" alt="Background image" />
   </div>
-
-  <!-- Error sound -->
-  <audio id="error-sound" src="audio/error.mp3" preload="auto"></audio>
-
-  <div class="image-container">
-    <img src="images/background.jpg" alt="drawing" id="bg-image">
-    <a href="sic_semper_tyrannis.html" class="hotspot" id="hotspot"></a>
-
-    <div class="center">
-      <h1>...---...</h1>
-      <p id="unstable"></p>
-    </div>
-  </div>
-
-  <script>
-    const phrases = [
-      "je me souviens.",
-      "I remember.",
-      "elle se souvient aussi",
-      "she remembers",
-      "le miroir se souvient",
-      "the mirror remembers",
-      "she's still behind the wall",
-      "elle est toujours derrière le mur."
-    ];
-
-    const colors = ["white", "#ff3300", "#ff6600", "gray", "black"];
-
-    function glitchText(text) {
-      return text.split("").map(char => {
-        if (Math.random() < 0.4) {
-          const x = Math.floor(Math.random()*10-5);
-          const y = Math.floor(Math.random()*10-5);
-          const rotate = Math.floor(Math.random()*30-15);
-          const color = colors[Math.floor(Math.random()*colors.length)];
-          const opacity = Math.random() * 0.6 + 0.4;
-          return `<span style="color:${color}; transform:translate(${x}px,${y}px) rotate(${rotate}deg); opacity:${opacity}; display:inline-block;">${char}</span>`;
-        } else {
-          return char;
-        }
-      }).join("");
-    }
-
-    const PASSWORD = "1222";
-
-    window.onload = function() {
-      // Glitch text
-      const unstable = document.getElementById("unstable");
-      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
-      unstable.innerHTML = glitchText(phrase);
-
-      // Popup elements
-      const popup = document.getElementById("password-popup");
-      const input = document.getElementById("pwd-input");
-      const button = document.getElementById("pwd-button");
-      const errorSound = document.getElementById("error-sound");
-
-      // Check if password was already entered
-      if(localStorage.getItem("rust9_access_granted") === "true") {
-        popup.style.display = "none";
-      }
-
-      function checkPassword() {
-        const val = input.value.trim();
-        if(val === PASSWORD) {
-          localStorage.setItem("rust9_access_granted", "true");
-          popup.style.display = "none";
-        } else {
-          errorSound.currentTime = 0; // reset sound
-          errorSound.play();
-          alert("Incorrect password");
-        }
-      }
-
-      // Button click
-      button.addEventListener("click", checkPassword);
-
-      // Enter key
-      input.addEventListener("keydown", function(e){
-        if(e.key === "Enter") checkPassword();
-      });
-    };
-
-    // Hotspot scaling
-    const hotspotBox = { x: 1600, y: 380, w: 20, h: 20 };
-    const bgImage = document.getElementById("bg-image");
-    const hotspot = document.getElementById("hotspot");
-
-    function updateHotspot() {
-      const rect = bgImage.getBoundingClientRect();
-      const scaleX = rect.width / 1920;
-      const scaleY = rect.height / 1080;
-
-      hotspot.style.left = (hotspotBox.x * scaleX) + "px";
-      hotspot.style.top = (hotspotBox.y * scaleY) + "px";
-      hotspot.style.width = Math.max(hotspotBox.w * scaleX, 10) + "px";
-      hotspot.style.height = Math.max(hotspotBox.h * scaleY, 10) + "px";
-    }
-
-    window.addEventListener("resize", updateHotspot);
-    window.addEventListener("load", updateHotspot);
-  </script>
 </body>
 </html>
